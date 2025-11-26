@@ -1,0 +1,1327 @@
+{
+  "test_metadata": {
+    "start_time": "2025-11-26T18:20:21.224677",
+    "test_scenarios": [
+      "straight_line",
+      "left_turn",
+      "right_turn",
+      "intersection",
+      "lost_line",
+      "sharp_curve",
+      "obstacle_avoidance",
+      "end_of_line"
+    ],
+    "overall_accuracy": 21.355685131195333,
+    "total_steps": 1372,
+    "correct_steps": 293,
+    "end_time": "2025-11-26T18:21:47.706797"
+  },
+  "scenario_results": {
+    "straight_line": {
+      "scenario_name": "straight_line",
+      "description": "Robot following a straight line path",
+      "total_steps": 160,
+      "correct_steps": 79,
+      "accuracy": 49.375,
+      "action_distribution": {
+        "forward": 160
+      },
+      "error_patterns": {
+        "slight_left_correction -> forward": 51,
+        "slight_right_correction -> forward": 30
+      },
+      "step_details": [
+        {
+          "timestamp": 9.40700000000652,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.469000000040978,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.516000000061467,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.579000000027008,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.65700000000652,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.719000000040978,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.78200000000652,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.829000000027008,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.90700000000652,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.969000000040978,
+          "sensor_data": {
+            "left": 195,
+            "center": 830,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        }
+      ]
+    },
+    "left_turn": {
+      "scenario_name": "left_turn",
+      "description": "Robot approaching and executing a left turn",
+      "total_steps": 129,
+      "correct_steps": 16,
+      "accuracy": 12.4031007751938,
+      "action_distribution": {
+        "slight_right_correction": 81,
+        "search_pattern": 16,
+        "sharp_right": 16,
+        "forward": 16
+      },
+      "error_patterns": {
+        "prepare_left_turn -> slight_right_correction": 17,
+        "initiate_left_turn -> slight_right_correction": 16,
+        "executing_left_turn -> search_pattern": 16,
+        "deep_left_turn -> sharp_right": 16,
+        "completing_left_turn -> slight_right_correction": 16,
+        "straightening_after_left -> slight_right_correction": 16,
+        "forward_after_left_turn -> slight_right_correction": 16
+      },
+      "step_details": [
+        {
+          "timestamp": 7.39000000001397,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.452999999979511,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.51500000001397,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.577999999979511,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.656000000075437,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.717999999993481,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.781000000075437,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.842999999993481,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.906000000075437,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.967999999993481,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        }
+      ]
+    },
+    "right_turn": {
+      "scenario_name": "right_turn",
+      "description": "Robot approaching and executing a right turn",
+      "total_steps": 128,
+      "correct_steps": 16,
+      "accuracy": 12.5,
+      "action_distribution": {
+        "slight_left_correction": 80,
+        "search_pattern": 16,
+        "sharp_left": 16,
+        "forward": 16
+      },
+      "error_patterns": {
+        "prepare_right_turn -> slight_left_correction": 17,
+        "initiate_right_turn -> slight_left_correction": 15,
+        "executing_right_turn -> search_pattern": 16,
+        "deep_right_turn -> sharp_left": 16,
+        "completing_right_turn -> slight_left_correction": 17,
+        "straightening_after_right -> slight_left_correction": 16,
+        "forward_after_right_turn -> slight_left_correction": 15
+      },
+      "step_details": [
+        {
+          "timestamp": 7.405999999959022,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.468999999924563,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.530999999959022,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.577999999979511,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.655999999959022,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.718999999924563,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.780999999959022,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.827999999979511,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.905999999959022,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 7.968999999924563,
+          "sensor_data": {
+            "left": 200,
+            "center": 820,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 8.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        }
+      ]
+    },
+    "intersection": {
+      "scenario_name": "intersection",
+      "description": "Robot approaching a 4-way intersection",
+      "total_steps": 164,
+      "correct_steps": 34,
+      "accuracy": 20.73170731707317,
+      "action_distribution": {
+        "forward": 116,
+        "slight_right_correction": 16,
+        "intersection_detected": 32
+      },
+      "error_patterns": {
+        "approaching_intersection -> forward": 17,
+        "intersection_detected -> forward": 16,
+        "at_intersection -> slight_right_correction": 16,
+        "full_intersection -> intersection_detected": 16,
+        "pause_at_intersection -> intersection_detected": 16,
+        "choosing_straight_path -> forward": 16,
+        "leaving_intersection -> forward": 16,
+        "after_intersection -> forward": 17
+      },
+      "step_details": [
+        {
+          "timestamp": 9.469000000040978,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.515999999945052,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.577999999979511,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.640999999945052,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.702999999979511,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.75,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.812999999965541,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.85999999998603,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.937999999965541,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 9.98499999998603,
+          "sensor_data": {
+            "left": 195,
+            "center": 825,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 10.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        }
+      ]
+    },
+    "lost_line": {
+      "scenario_name": "lost_line",
+      "description": "Robot loses the line and tries to recover",
+      "total_steps": 195,
+      "correct_steps": 48,
+      "accuracy": 24.615384615384617,
+      "action_distribution": {
+        "forward": 113,
+        "search_pattern": 33,
+        "line_lost": 49
+      },
+      "error_patterns": {
+        "line_weakening -> forward": 17,
+        "losing_line -> forward": 16,
+        "line_almost_lost -> search_pattern": 17,
+        "searching_left -> line_lost": 17,
+        "searching_right -> line_lost": 16,
+        "line_detected_left -> search_pattern": 16,
+        "recovering_line -> forward": 16,
+        "line_recovery -> forward": 15,
+        "line_recovered -> forward": 17
+      },
+      "step_details": [
+        {
+          "timestamp": 11.437999999965541,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.5,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.547000000020489,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.608999999938533,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.672000000020489,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.733999999938533,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.780999999959022,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.843999999924563,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.905999999959022,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 11.968999999924563,
+          "sensor_data": {
+            "left": 200,
+            "center": 825,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 12.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        }
+      ]
+    },
+    "sharp_curve": {
+      "scenario_name": "sharp_curve",
+      "description": "Robot navigating through a sharp S-curve",
+      "total_steps": 240,
+      "correct_steps": 49,
+      "accuracy": 20.416666666666668,
+      "action_distribution": {
+        "forward": 80,
+        "slight_right_correction": 63,
+        "sharp_right": 16,
+        "slight_left_correction": 65,
+        "sharp_left": 16
+      },
+      "error_patterns": {
+        "curve_approaching -> slight_right_correction": 16,
+        "sharp_left_curve_start -> slight_right_correction": 16,
+        "deep_left_curve -> sharp_right": 16,
+        "left_curve_exit -> slight_right_correction": 16,
+        "straightening -> slight_right_correction": 15,
+        "brief_straight -> forward": 16,
+        "right_curve_approaching -> slight_left_correction": 16,
+        "sharp_right_curve_start -> slight_left_correction": 16,
+        "deep_right_curve -> sharp_left": 16,
+        "right_curve_exit -> slight_left_correction": 16,
+        "straightening_after_right -> slight_left_correction": 17,
+        "nearly_straight -> forward": 15
+      },
+      "step_details": [
+        {
+          "timestamp": 14.359000000054948,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.422000000020489,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.5,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.562000000034459,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.625,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.687000000034459,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.75,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.797000000020489,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.859000000054948,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 14.922000000020489,
+          "sensor_data": {
+            "left": 195,
+            "center": 815,
+            "right": 205,
+            "action": "forward",
+            "timestamp": 15.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        }
+      ]
+    },
+    "obstacle_avoidance": {
+      "scenario_name": "obstacle_avoidance",
+      "description": "Robot detects obstacle and navigates around it",
+      "total_steps": 226,
+      "correct_steps": 51,
+      "accuracy": 22.566371681415927,
+      "action_distribution": {
+        "forward": 131,
+        "search_pattern": 47,
+        "slight_right_correction": 48
+      },
+      "error_patterns": {
+        "obstacle_approaching -> forward": 16,
+        "obstacle_closer -> forward": 16,
+        "obstacle_detected -> search_pattern": 15,
+        "obstacle_avoidance_start -> search_pattern": 16,
+        "avoiding_left -> search_pattern": 16,
+        "going_around_left -> slight_right_correction": 16,
+        "around_obstacle -> slight_right_correction": 16,
+        "returning_to_line -> slight_right_correction": 16,
+        "line_reacquisition -> forward": 16,
+        "back_on_line -> forward": 16,
+        "stabilizing -> forward": 16
+      },
+      "step_details": [
+        {
+          "timestamp": 13.437000000034459,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.484000000054948,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.547000000020489,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.59299999999348,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.656000000075437,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.71799999999348,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.797000000020489,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.859000000054948,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.922000000020489,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        },
+        {
+          "timestamp": 13.984000000054948,
+          "sensor_data": {
+            "left": 200,
+            "center": 830,
+            "right": 200,
+            "action": "forward",
+            "timestamp": 14.0
+          },
+          "expected_action": "forward",
+          "analyzed_action": "forward",
+          "correct": true
+        }
+      ]
+    },
+    "end_of_line": {
+      "scenario_name": "end_of_line",
+      "description": "Robot reaches the end of the line",
+      "total_steps": 130,
+      "correct_steps": 0,
+      "accuracy": 0.0,
+      "action_distribution": {
+        "forward": 33,
+        "search_pattern": 33,
+        "line_lost": 64
+      },
+      "error_patterns": {
+        "line_weakening -> forward": 17,
+        "approaching_end -> forward": 16,
+        "line_ending -> search_pattern": 16,
+        "end_detected -> search_pattern": 17,
+        "line_lost_end -> line_lost": 16,
+        "confirmed_end -> line_lost": 17,
+        "stop_command -> line_lost": 15,
+        "stopped -> line_lost": 16
+      },
+      "step_details": [
+        {
+          "timestamp": 7.390999999945052,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.452999999979511,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.530999999959022,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.594000000040978,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.640999999945052,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.702999999979511,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.780999999959022,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.844000000040978,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.905999999959022,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        },
+        {
+          "timestamp": 7.952999999979511,
+          "sensor_data": {
+            "left": 20,
+            "center": 75,
+            "right": 20,
+            "action": "stopped",
+            "timestamp": 8.0
+          },
+          "expected_action": "stopped",
+          "analyzed_action": "line_lost",
+          "correct": false
+        }
+      ]
+    }
+  },
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Algorithm",
+      "issue": "Low overall accuracy",
+      "description": "Overall accuracy of 21.4% is below acceptable threshold",
+      "suggestion": "Review and refine sensor analysis algorithm logic"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "Error Pattern",
+      "issue": "Frequent misclassification: slight_left_correction -> forward",
+      "description": "Pattern 'slight_left_correction -> forward' occurred 51 times in straight_line",
+      "suggestion": "Adjust decision thresholds for this specific case"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Scenario Specific",
+      "issue": "Poor performance in left_turn",
+      "description": "Accuracy of 12.4% in left_turn scenario",
+      "suggestion": "Review sensor thresholds and logic for left_turn conditions"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Scenario Specific",
+      "issue": "Poor performance in right_turn",
+      "description": "Accuracy of 12.5% in right_turn scenario",
+      "suggestion": "Review sensor thresholds and logic for right_turn conditions"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Scenario Specific",
+      "issue": "Poor performance in intersection",
+      "description": "Accuracy of 20.7% in intersection scenario",
+      "suggestion": "Review sensor thresholds and logic for intersection conditions"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Scenario Specific",
+      "issue": "Poor performance in lost_line",
+      "description": "Accuracy of 24.6% in lost_line scenario",
+      "suggestion": "Review sensor thresholds and logic for lost_line conditions"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Scenario Specific",
+      "issue": "Poor performance in sharp_curve",
+      "description": "Accuracy of 20.4% in sharp_curve scenario",
+      "suggestion": "Review sensor thresholds and logic for sharp_curve conditions"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Scenario Specific",
+      "issue": "Poor performance in obstacle_avoidance",
+      "description": "Accuracy of 22.6% in obstacle_avoidance scenario",
+      "suggestion": "Review sensor thresholds and logic for obstacle_avoidance conditions"
+    },
+    {
+      "priority": "HIGH",
+      "category": "Scenario Specific",
+      "issue": "Poor performance in end_of_line",
+      "description": "Accuracy of 0.0% in end_of_line scenario",
+      "suggestion": "Review sensor thresholds and logic for end_of_line conditions"
+    },
+    {
+      "priority": "MEDIUM",
+      "category": "Coverage",
+      "issue": "Missing action implementations",
+      "description": "Actions never generated: stopped",
+      "suggestion": "Implement logic to handle these specific actions"
+    }
+  ]
+}

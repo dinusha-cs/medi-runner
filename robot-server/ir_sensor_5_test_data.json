@@ -1,0 +1,188 @@
+{
+  "sensor_configuration": {
+    "description": "5 IR sensors + 1 bump sensor + 1 proximity sensor",
+    "ir_sensors": {
+      "ir1": {"position": "far_left", "description": "Far left IR sensor"},
+      "ir2": {"position": "left", "description": "Left IR sensor"},
+      "ir3": {"position": "center", "description": "Center IR sensor"},
+      "ir4": {"position": "right", "description": "Right IR sensor"},
+      "ir5": {"position": "far_right", "description": "Far right IR sensor"}
+    },
+    "bump_sensor": {
+      "description": "Physical contact sensor for collision detection",
+      "values": {"0": "no_contact", "1": "contact_detected"}
+    },
+    "proximity_sensor": {
+      "description": "Distance sensor for obstacle detection",
+      "range_cm": {"min": 2, "max": 400},
+      "values": {"high": "obstacle_close", "medium": "obstacle_medium", "low": "path_clear"}
+    }
+  },
+  "test_scenarios": {
+    "straight_line": {
+      "description": "Robot following a straight line path with 5 IR sensors",
+      "duration": 10,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 1.0, "ir1": 130, "ir2": 180, "ir3": 820, "ir4": 220, "ir5": 160, "bump": 0, "proximity": 240, "action": "slight_left_correction"},
+        {"timestamp": 2.0, "ir1": 160, "ir2": 210, "ir3": 810, "ir4": 190, "ir5": 140, "bump": 0, "proximity": 260, "action": "slight_right_correction"},
+        {"timestamp": 3.0, "ir1": 145, "ir2": 195, "ir3": 825, "ir4": 205, "ir5": 155, "bump": 0, "proximity": 245, "action": "forward"},
+        {"timestamp": 4.0, "ir1": 150, "ir2": 200, "ir3": 830, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 5.0, "ir1": 135, "ir2": 185, "ir3": 815, "ir4": 215, "ir5": 165, "bump": 0, "proximity": 235, "action": "slight_left_correction"},
+        {"timestamp": 6.0, "ir1": 165, "ir2": 205, "ir3": 820, "ir4": 195, "ir5": 145, "bump": 0, "proximity": 265, "action": "slight_right_correction"},
+        {"timestamp": 7.0, "ir1": 150, "ir2": 200, "ir3": 835, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 8.0, "ir1": 140, "ir2": 190, "ir3": 825, "ir4": 210, "ir5": 160, "bump": 0, "proximity": 240, "action": "slight_left_correction"},
+        {"timestamp": 9.0, "ir1": 150, "ir2": 200, "ir3": 840, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 10.0, "ir1": 145, "ir2": 195, "ir3": 830, "ir4": 205, "ir5": 155, "bump": 0, "proximity": 245, "action": "forward"}
+      ]
+    },
+    "left_turn": {
+      "description": "Robot approaching and executing a left turn with 5 IR sensors",
+      "duration": 8,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 1.0, "ir1": 250, "ir2": 300, "ir3": 750, "ir4": 150, "ir5": 100, "bump": 0, "proximity": 240, "action": "prepare_left_turn"},
+        {"timestamp": 2.0, "ir1": 450, "ir2": 500, "ir3": 600, "ir4": 100, "ir5": 50, "bump": 0, "proximity": 230, "action": "initiate_left_turn"},
+        {"timestamp": 3.0, "ir1": 700, "ir2": 750, "ir3": 400, "ir4": 50, "ir5": 30, "bump": 0, "proximity": 220, "action": "executing_left_turn"},
+        {"timestamp": 4.0, "ir1": 850, "ir2": 900, "ir3": 200, "ir4": 30, "ir5": 20, "bump": 0, "proximity": 210, "action": "deep_left_turn"},
+        {"timestamp": 5.0, "ir1": 750, "ir2": 800, "ir3": 500, "ir4": 100, "ir5": 80, "bump": 0, "proximity": 220, "action": "completing_left_turn"},
+        {"timestamp": 6.0, "ir1": 450, "ir2": 500, "ir3": 750, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 230, "action": "straightening_after_left"},
+        {"timestamp": 7.0, "ir1": 200, "ir2": 250, "ir3": 800, "ir4": 180, "ir5": 160, "bump": 0, "proximity": 240, "action": "forward_after_left_turn"},
+        {"timestamp": 8.0, "ir1": 150, "ir2": 200, "ir3": 820, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"}
+      ]
+    },
+    "right_turn": {
+      "description": "Robot approaching and executing a right turn with 5 IR sensors",
+      "duration": 8,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 1.0, "ir1": 100, "ir2": 150, "ir3": 750, "ir4": 300, "ir5": 250, "bump": 0, "proximity": 240, "action": "prepare_right_turn"},
+        {"timestamp": 2.0, "ir1": 50, "ir2": 100, "ir3": 600, "ir4": 500, "ir5": 450, "bump": 0, "proximity": 230, "action": "initiate_right_turn"},
+        {"timestamp": 3.0, "ir1": 30, "ir2": 50, "ir3": 400, "ir4": 750, "ir5": 700, "bump": 0, "proximity": 220, "action": "executing_right_turn"},
+        {"timestamp": 4.0, "ir1": 20, "ir2": 30, "ir3": 200, "ir4": 900, "ir5": 850, "bump": 0, "proximity": 210, "action": "deep_right_turn"},
+        {"timestamp": 5.0, "ir1": 80, "ir2": 100, "ir3": 500, "ir4": 800, "ir5": 750, "bump": 0, "proximity": 220, "action": "completing_right_turn"},
+        {"timestamp": 6.0, "ir1": 150, "ir2": 200, "ir3": 750, "ir4": 500, "ir5": 450, "bump": 0, "proximity": 230, "action": "straightening_after_right"},
+        {"timestamp": 7.0, "ir1": 160, "ir2": 180, "ir3": 800, "ir4": 250, "ir5": 200, "bump": 0, "proximity": 240, "action": "forward_after_right_turn"},
+        {"timestamp": 8.0, "ir1": 150, "ir2": 200, "ir3": 820, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"}
+      ]
+    },
+    "intersection": {
+      "description": "Robot approaching a 4-way intersection with 5 IR sensors",
+      "duration": 10,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 1.0, "ir1": 250, "ir2": 300, "ir3": 750, "ir4": 300, "ir5": 250, "bump": 0, "proximity": 240, "action": "approaching_intersection"},
+        {"timestamp": 2.0, "ir1": 450, "ir2": 500, "ir3": 700, "ir4": 500, "ir5": 450, "bump": 0, "proximity": 230, "action": "intersection_detected"},
+        {"timestamp": 3.0, "ir1": 750, "ir2": 800, "ir3": 600, "ir4": 800, "ir5": 750, "bump": 0, "proximity": 220, "action": "at_intersection"},
+        {"timestamp": 4.0, "ir1": 900, "ir2": 900, "ir3": 900, "ir4": 900, "ir5": 900, "bump": 0, "proximity": 210, "action": "full_intersection"},
+        {"timestamp": 5.0, "ir1": 850, "ir2": 850, "ir3": 850, "ir4": 850, "ir5": 850, "bump": 0, "proximity": 215, "action": "pause_at_intersection"},
+        {"timestamp": 6.0, "ir1": 350, "ir2": 400, "ir3": 800, "ir4": 400, "ir5": 350, "bump": 0, "proximity": 225, "action": "choosing_straight_path"},
+        {"timestamp": 7.0, "ir1": 250, "ir2": 300, "ir3": 850, "ir4": 300, "ir5": 250, "bump": 0, "proximity": 235, "action": "leaving_intersection"},
+        {"timestamp": 8.0, "ir1": 180, "ir2": 220, "ir3": 820, "ir4": 220, "ir5": 180, "bump": 0, "proximity": 245, "action": "after_intersection"},
+        {"timestamp": 9.0, "ir1": 150, "ir2": 200, "ir3": 830, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 10.0, "ir1": 145, "ir2": 195, "ir3": 825, "ir4": 205, "ir5": 155, "bump": 0, "proximity": 245, "action": "forward"}
+      ]
+    },
+    "lost_line": {
+      "description": "Robot loses the line and tries to recover with 5 IR sensors",
+      "duration": 12,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 1.0, "ir1": 120, "ir2": 150, "ir3": 700, "ir4": 150, "ir5": 120, "bump": 0, "proximity": 240, "action": "line_weakening"},
+        {"timestamp": 2.0, "ir1": 90, "ir2": 100, "ir3": 500, "ir4": 100, "ir5": 90, "bump": 0, "proximity": 230, "action": "losing_line"},
+        {"timestamp": 3.0, "ir1": 70, "ir2": 80, "ir3": 300, "ir4": 80, "ir5": 70, "bump": 0, "proximity": 220, "action": "line_almost_lost"},
+        {"timestamp": 4.0, "ir1": 40, "ir2": 50, "ir3": 100, "ir4": 50, "ir5": 40, "bump": 0, "proximity": 210, "action": "line_lost"},
+        {"timestamp": 5.0, "ir1": 35, "ir2": 45, "ir3": 90, "ir4": 45, "ir5": 35, "bump": 0, "proximity": 200, "action": "searching_left"},
+        {"timestamp": 6.0, "ir1": 30, "ir2": 40, "ir3": 85, "ir4": 40, "ir5": 30, "bump": 0, "proximity": 195, "action": "searching_right"},
+        {"timestamp": 7.0, "ir1": 50, "ir2": 60, "ir3": 200, "ir4": 50, "ir5": 40, "bump": 0, "proximity": 205, "action": "line_detected_left"},
+        {"timestamp": 8.0, "ir1": 120, "ir2": 150, "ir3": 500, "ir4": 100, "ir5": 80, "bump": 0, "proximity": 215, "action": "recovering_line"},
+        {"timestamp": 9.0, "ir1": 180, "ir2": 220, "ir3": 700, "ir4": 180, "ir5": 140, "bump": 0, "proximity": 225, "action": "line_recovery"},
+        {"timestamp": 10.0, "ir1": 160, "ir2": 200, "ir3": 780, "ir4": 190, "ir5": 150, "bump": 0, "proximity": 235, "action": "line_recovered"},
+        {"timestamp": 11.0, "ir1": 145, "ir2": 195, "ir3": 820, "ir4": 205, "ir5": 155, "bump": 0, "proximity": 245, "action": "forward"},
+        {"timestamp": 12.0, "ir1": 150, "ir2": 200, "ir3": 825, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"}
+      ]
+    },
+    "obstacle_detection": {
+      "description": "Robot detects obstacle using proximity sensor and bump sensor",
+      "duration": 14,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 1.0, "ir1": 145, "ir2": 195, "ir3": 780, "ir4": 195, "ir5": 145, "bump": 0, "proximity": 180, "action": "obstacle_approaching"},
+        {"timestamp": 2.0, "ir1": 140, "ir2": 190, "ir3": 750, "ir4": 190, "ir5": 140, "bump": 0, "proximity": 120, "action": "obstacle_closer"},
+        {"timestamp": 3.0, "ir1": 135, "ir2": 185, "ir3": 700, "ir4": 185, "ir5": 135, "bump": 0, "proximity": 80, "action": "obstacle_detected"},
+        {"timestamp": 4.0, "ir1": 130, "ir2": 180, "ir3": 650, "ir4": 180, "ir5": 130, "bump": 0, "proximity": 50, "action": "obstacle_very_close"},
+        {"timestamp": 5.0, "ir1": 125, "ir2": 175, "ir3": 600, "ir4": 175, "ir5": 125, "bump": 0, "proximity": 30, "action": "emergency_stop"},
+        {"timestamp": 6.0, "ir1": 300, "ir2": 350, "ir3": 400, "ir4": 100, "ir5": 80, "bump": 0, "proximity": 35, "action": "avoiding_left"},
+        {"timestamp": 7.0, "ir1": 500, "ir2": 600, "ir3": 200, "ir4": 80, "ir5": 60, "bump": 0, "proximity": 45, "action": "going_around_left"},
+        {"timestamp": 8.0, "ir1": 600, "ir2": 700, "ir3": 300, "ir4": 150, "ir5": 120, "bump": 0, "proximity": 60, "action": "around_obstacle"},
+        {"timestamp": 9.0, "ir1": 400, "ir2": 500, "ir3": 600, "ir4": 200, "ir5": 180, "bump": 0, "proximity": 80, "action": "returning_to_line"},
+        {"timestamp": 10.0, "ir1": 250, "ir2": 300, "ir3": 700, "ir4": 250, "ir5": 220, "bump": 0, "proximity": 120, "action": "line_reacquisition"},
+        {"timestamp": 11.0, "ir1": 200, "ir2": 250, "ir3": 750, "ir4": 200, "ir5": 180, "bump": 0, "proximity": 160, "action": "back_on_line"},
+        {"timestamp": 12.0, "ir1": 170, "ir2": 220, "ir3": 800, "ir4": 190, "ir5": 160, "bump": 0, "proximity": 200, "action": "stabilizing"},
+        {"timestamp": 13.0, "ir1": 150, "ir2": 200, "ir3": 820, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 240, "action": "forward"},
+        {"timestamp": 14.0, "ir1": 150, "ir2": 200, "ir3": 830, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"}
+      ]
+    },
+    "bump_collision": {
+      "description": "Robot encounters physical collision detected by bump sensor",
+      "duration": 8,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 1.0, "ir1": 145, "ir2": 195, "ir3": 780, "ir4": 195, "ir5": 145, "bump": 0, "proximity": 100, "action": "obstacle_approaching"},
+        {"timestamp": 2.0, "ir1": 140, "ir2": 190, "ir3": 750, "ir4": 190, "ir5": 140, "bump": 0, "proximity": 50, "action": "obstacle_very_close"},
+        {"timestamp": 3.0, "ir1": 135, "ir2": 185, "ir3": 700, "ir4": 185, "ir5": 135, "bump": 1, "proximity": 20, "action": "collision_detected"},
+        {"timestamp": 4.0, "ir1": 130, "ir2": 180, "ir3": 650, "ir4": 180, "ir5": 130, "bump": 1, "proximity": 15, "action": "emergency_stop"},
+        {"timestamp": 5.0, "ir1": 125, "ir2": 175, "ir3": 600, "ir4": 175, "ir5": 125, "bump": 1, "proximity": 10, "action": "reverse_from_obstacle"},
+        {"timestamp": 6.0, "ir1": 140, "ir2": 190, "ir3": 750, "ir4": 190, "ir5": 140, "bump": 0, "proximity": 30, "action": "backing_away"},
+        {"timestamp": 7.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 80, "action": "safe_distance"},
+        {"timestamp": 8.0, "ir1": 150, "ir2": 200, "ir3": 820, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 120, "action": "ready_to_continue"}
+      ]
+    },
+    "wide_line_detection": {
+      "description": "Robot following a wider line using all 5 IR sensors",
+      "duration": 10,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 300, "ir2": 600, "ir3": 900, "ir4": 600, "ir5": 300, "bump": 0, "proximity": 250, "action": "wide_line_forward"},
+        {"timestamp": 1.0, "ir1": 250, "ir2": 550, "ir3": 850, "ir4": 650, "ir5": 350, "bump": 0, "proximity": 240, "action": "wide_line_slight_left"},
+        {"timestamp": 2.0, "ir1": 350, "ir2": 650, "ir3": 850, "ir4": 550, "ir5": 250, "bump": 0, "proximity": 260, "action": "wide_line_slight_right"},
+        {"timestamp": 3.0, "ir1": 320, "ir2": 620, "ir3": 900, "ir4": 620, "ir5": 320, "bump": 0, "proximity": 245, "action": "wide_line_forward"},
+        {"timestamp": 4.0, "ir1": 280, "ir2": 580, "ir3": 880, "ir4": 640, "ir5": 340, "bump": 0, "proximity": 250, "action": "wide_line_slight_left"},
+        {"timestamp": 5.0, "ir1": 340, "ir2": 640, "ir3": 880, "ir4": 580, "ir5": 280, "bump": 0, "proximity": 235, "action": "wide_line_slight_right"},
+        {"timestamp": 6.0, "ir1": 310, "ir2": 610, "ir3": 920, "ir4": 610, "ir5": 310, "bump": 0, "proximity": 265, "action": "wide_line_forward"},
+        {"timestamp": 7.0, "ir1": 290, "ir2": 590, "ir3": 900, "ir4": 630, "ir5": 330, "bump": 0, "proximity": 250, "action": "wide_line_slight_left"},
+        {"timestamp": 8.0, "ir1": 330, "ir2": 630, "ir3": 900, "ir4": 590, "ir5": 290, "bump": 0, "proximity": 240, "action": "wide_line_slight_right"},
+        {"timestamp": 9.0, "ir1": 300, "ir2": 600, "ir3": 910, "ir4": 600, "ir5": 300, "bump": 0, "proximity": 250, "action": "wide_line_forward"},
+        {"timestamp": 10.0, "ir1": 295, "ir2": 595, "ir3": 905, "ir4": 605, "ir5": 305, "bump": 0, "proximity": 245, "action": "wide_line_forward"}
+      ]
+    }
+  },
+  "sensor_thresholds": {
+    "ir_line_detected": 400,
+    "ir_strong_line": 600,
+    "ir_very_strong_line": 800,
+    "ir_no_line": 200,
+    "ir_intersection_threshold": 700,
+    "ir_lost_line_threshold": 150,
+    "proximity_obstacle_close": 100,
+    "proximity_obstacle_very_close": 50,
+    "proximity_collision_imminent": 30,
+    "bump_collision": 1
+  },
+  "action_mapping": {
+    "forward": {"left_motor": 100, "right_motor": 100, "description": "Move straight forward"},
+    "slight_left_correction": {"left_motor": 80, "right_motor": 100, "description": "Minor left correction"},
+    "slight_right_correction": {"left_motor": 100, "right_motor": 80, "description": "Minor right correction"},
+    "sharp_left": {"left_motor": 40, "right_motor": 100, "description": "Sharp left turn"},
+    "sharp_right": {"left_motor": 100, "right_motor": 40, "description": "Sharp right turn"},
+    "emergency_stop": {"left_motor": 0, "right_motor": 0, "description": "Emergency stop all motors"},
+    "reverse_from_obstacle": {"left_motor": -50, "right_motor": -50, "description": "Reverse away from obstacle"},
+    "search_left": {"left_motor": -30, "right_motor": 60, "description": "Search for line turning left"},
+    "search_right": {"left_motor": 60, "right_motor": -30, "description": "Search for line turning right"},
+    "wide_line_forward": {"left_motor": 90, "right_motor": 90, "description": "Follow wide line forward"},
+    "wide_line_slight_left": {"left_motor": 70, "right_motor": 90, "description": "Wide line left correction"},
+    "wide_line_slight_right": {"left_motor": 90, "right_motor": 70, "description": "Wide line right correction"},
+    "collision_detected": {"left_motor": 0, "right_motor": 0, "description": "Collision detected - stop"},
+    "obstacle_avoidance_left": {"left_motor": 60, "right_motor": 100, "description": "Avoid obstacle by going left"},
+    "obstacle_avoidance_right": {"left_motor": 100, "right_motor": 60, "description": "Avoid obstacle by going right"}
+  }
+}

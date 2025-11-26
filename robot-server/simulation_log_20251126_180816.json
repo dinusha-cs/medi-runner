@@ -1,0 +1,585 @@
+{
+  "simulation_metadata": {
+    "timestamp": "2025-11-26T18:08:16.224535",
+    "test_data_file": "ir_sensor_test_data.json",
+    "total_steps": 32
+  },
+  "simulation_log": [
+    {
+      "timestamp": 0.20567893981933594,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 800,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 0.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 0.5235762596130371,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 180,
+        "center": 820,
+        "right": 220,
+        "action": "slight_left_correction",
+        "timestamp": 1.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 0.8483715057373047,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 180,
+        "center": 820,
+        "right": 220,
+        "action": "slight_left_correction",
+        "timestamp": 1.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 1.1719353199005127,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 180,
+        "center": 820,
+        "right": 220,
+        "action": "slight_left_correction",
+        "timestamp": 1.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 1.4904334545135498,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 210,
+        "center": 810,
+        "right": 190,
+        "action": "slight_right_correction",
+        "timestamp": 2.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_right_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 1.8088634014129639,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 210,
+        "center": 810,
+        "right": 190,
+        "action": "slight_right_correction",
+        "timestamp": 2.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_right_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 2.1369504928588867,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 210,
+        "center": 810,
+        "right": 190,
+        "action": "slight_right_correction",
+        "timestamp": 2.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_right_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 2.4532291889190674,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 195,
+        "center": 825,
+        "right": 205,
+        "action": "forward",
+        "timestamp": 3.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 2.7598795890808105,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 195,
+        "center": 825,
+        "right": 205,
+        "action": "forward",
+        "timestamp": 3.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 3.0786309242248535,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 195,
+        "center": 825,
+        "right": 205,
+        "action": "forward",
+        "timestamp": 3.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 3.405052900314331,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 830,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 4.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 3.7372400760650635,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 830,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 4.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 4.0577027797698975,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 830,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 4.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 4.372694969177246,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 185,
+        "center": 815,
+        "right": 215,
+        "action": "slight_left_correction",
+        "timestamp": 5.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 4.693756580352783,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 185,
+        "center": 815,
+        "right": 215,
+        "action": "slight_left_correction",
+        "timestamp": 5.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 5.036675691604614,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 185,
+        "center": 815,
+        "right": 215,
+        "action": "slight_left_correction",
+        "timestamp": 5.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 5.363009214401245,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 205,
+        "center": 820,
+        "right": 195,
+        "action": "slight_right_correction",
+        "timestamp": 6.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_right_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 5.685281038284302,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 205,
+        "center": 820,
+        "right": 195,
+        "action": "slight_right_correction",
+        "timestamp": 6.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_right_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 6.006702423095703,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 205,
+        "center": 820,
+        "right": 195,
+        "action": "slight_right_correction",
+        "timestamp": 6.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_right_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 6.335009813308716,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 835,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 7.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 6.651989221572876,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 835,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 7.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 6.968484401702881,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 835,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 7.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 7.29852032661438,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 190,
+        "center": 825,
+        "right": 210,
+        "action": "slight_left_correction",
+        "timestamp": 8.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 7.633708715438843,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 190,
+        "center": 825,
+        "right": 210,
+        "action": "slight_left_correction",
+        "timestamp": 8.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 7.953787803649902,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 190,
+        "center": 825,
+        "right": 210,
+        "action": "slight_left_correction",
+        "timestamp": 8.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "slight_left_correction",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": false
+    },
+    {
+      "timestamp": 8.267744064331055,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 840,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 9.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 8.584789037704468,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 840,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 9.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 8.90336561203003,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 200,
+        "center": 840,
+        "right": 200,
+        "action": "forward",
+        "timestamp": 9.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 9.222590923309326,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 195,
+        "center": 830,
+        "right": 205,
+        "action": "forward",
+        "timestamp": 10.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 9.549682378768921,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 195,
+        "center": 830,
+        "right": 205,
+        "action": "forward",
+        "timestamp": 10.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 9.862027883529663,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 195,
+        "center": 830,
+        "right": 205,
+        "action": "forward",
+        "timestamp": 10.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    },
+    {
+      "timestamp": 10.200170516967773,
+      "scenario": "straight_line",
+      "sensor_data": {
+        "left": 195,
+        "center": 830,
+        "right": 205,
+        "action": "forward",
+        "timestamp": 10.0
+      },
+      "analyzed_action": "forward",
+      "expected_action": "forward",
+      "motor_speeds": {
+        "left": 100,
+        "right": 100
+      },
+      "match": true
+    }
+  ]
+}

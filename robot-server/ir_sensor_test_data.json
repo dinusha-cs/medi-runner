@@ -1,0 +1,164 @@
+{
+  "test_scenarios": {
+    "straight_line": {
+      "description": "Robot following a straight line path",
+      "duration": 10,
+      "sensor_data": [
+        {"timestamp": 0.0, "ir1": 150, "ir2": 200, "ir3": 800, "ir4": 200, "ir5": 150, "bump": 0, "proximity": 250, "action": "forward"},
+        {"timestamp": 1.0, "left": 180, "center": 820, "right": 220, "action": "slight_left_correction"},
+        {"timestamp": 2.0, "left": 210, "center": 810, "right": 190, "action": "slight_right_correction"},
+        {"timestamp": 3.0, "left": 195, "center": 825, "right": 205, "action": "forward"},
+        {"timestamp": 4.0, "left": 200, "center": 830, "right": 200, "action": "forward"},
+        {"timestamp": 5.0, "left": 185, "center": 815, "right": 215, "action": "slight_left_correction"},
+        {"timestamp": 6.0, "left": 205, "center": 820, "right": 195, "action": "slight_right_correction"},
+        {"timestamp": 7.0, "left": 200, "center": 835, "right": 200, "action": "forward"},
+        {"timestamp": 8.0, "left": 190, "center": 825, "right": 210, "action": "slight_left_correction"},
+        {"timestamp": 9.0, "left": 200, "center": 840, "right": 200, "action": "forward"},
+        {"timestamp": 10.0, "left": 195, "center": 830, "right": 205, "action": "forward"}
+      ]
+    },
+    "left_turn": {
+      "description": "Robot approaching and executing a left turn",
+      "duration": 8,
+      "sensor_data": [
+        {"timestamp": 0.0, "left": 200, "center": 800, "right": 200, "action": "forward"},
+        {"timestamp": 1.0, "left": 300, "center": 750, "right": 150, "action": "prepare_left_turn"},
+        {"timestamp": 2.0, "left": 500, "center": 600, "right": 100, "action": "initiate_left_turn"},
+        {"timestamp": 3.0, "left": 750, "center": 400, "right": 50, "action": "executing_left_turn"},
+        {"timestamp": 4.0, "left": 900, "center": 200, "right": 30, "action": "deep_left_turn"},
+        {"timestamp": 5.0, "left": 800, "center": 500, "right": 100, "action": "completing_left_turn"},
+        {"timestamp": 6.0, "left": 500, "center": 750, "right": 200, "action": "straightening_after_left"},
+        {"timestamp": 7.0, "left": 250, "center": 800, "right": 180, "action": "forward_after_left_turn"},
+        {"timestamp": 8.0, "left": 200, "center": 820, "right": 200, "action": "forward"}
+      ]
+    },
+    "right_turn": {
+      "description": "Robot approaching and executing a right turn",
+      "duration": 8,
+      "sensor_data": [
+        {"timestamp": 0.0, "left": 200, "center": 800, "right": 200, "action": "forward"},
+        {"timestamp": 1.0, "left": 150, "center": 750, "right": 300, "action": "prepare_right_turn"},
+        {"timestamp": 2.0, "left": 100, "center": 600, "right": 500, "action": "initiate_right_turn"},
+        {"timestamp": 3.0, "left": 50, "center": 400, "right": 750, "action": "executing_right_turn"},
+        {"timestamp": 4.0, "left": 30, "center": 200, "right": 900, "action": "deep_right_turn"},
+        {"timestamp": 5.0, "left": 100, "center": 500, "right": 800, "action": "completing_right_turn"},
+        {"timestamp": 6.0, "left": 200, "center": 750, "right": 500, "action": "straightening_after_right"},
+        {"timestamp": 7.0, "left": 180, "center": 800, "right": 250, "action": "forward_after_right_turn"},
+        {"timestamp": 8.0, "left": 200, "center": 820, "right": 200, "action": "forward"}
+      ]
+    },
+    "intersection": {
+      "description": "Robot approaching a 4-way intersection",
+      "duration": 10,
+      "sensor_data": [
+        {"timestamp": 0.0, "left": 200, "center": 800, "right": 200, "action": "forward"},
+        {"timestamp": 1.0, "left": 300, "center": 750, "right": 300, "action": "approaching_intersection"},
+        {"timestamp": 2.0, "left": 500, "center": 700, "right": 500, "action": "intersection_detected"},
+        {"timestamp": 3.0, "left": 800, "center": 600, "right": 800, "action": "at_intersection"},
+        {"timestamp": 4.0, "left": 900, "center": 900, "right": 900, "action": "full_intersection"},
+        {"timestamp": 5.0, "left": 850, "center": 850, "right": 850, "action": "pause_at_intersection"},
+        {"timestamp": 6.0, "left": 400, "center": 800, "right": 400, "action": "choosing_straight_path"},
+        {"timestamp": 7.0, "left": 300, "center": 850, "right": 300, "action": "leaving_intersection"},
+        {"timestamp": 8.0, "left": 220, "center": 820, "right": 220, "action": "after_intersection"},
+        {"timestamp": 9.0, "left": 200, "center": 830, "right": 200, "action": "forward"},
+        {"timestamp": 10.0, "left": 195, "center": 825, "right": 205, "action": "forward"}
+      ]
+    },
+    "lost_line": {
+      "description": "Robot loses the line and tries to recover",
+      "duration": 12,
+      "sensor_data": [
+        {"timestamp": 0.0, "left": 200, "center": 800, "right": 200, "action": "forward"},
+        {"timestamp": 1.0, "left": 150, "center": 700, "right": 150, "action": "line_weakening"},
+        {"timestamp": 2.0, "left": 100, "center": 500, "right": 100, "action": "losing_line"},
+        {"timestamp": 3.0, "left": 80, "center": 300, "right": 80, "action": "line_almost_lost"},
+        {"timestamp": 4.0, "left": 50, "center": 100, "right": 50, "action": "line_lost"},
+        {"timestamp": 5.0, "left": 45, "center": 90, "right": 45, "action": "searching_left"},
+        {"timestamp": 6.0, "left": 40, "center": 85, "right": 40, "action": "searching_right"},
+        {"timestamp": 7.0, "left": 60, "center": 200, "right": 50, "action": "line_detected_left"},
+        {"timestamp": 8.0, "left": 150, "center": 500, "right": 100, "action": "recovering_line"},
+        {"timestamp": 9.0, "left": 220, "center": 700, "right": 180, "action": "line_recovery"},
+        {"timestamp": 10.0, "left": 200, "center": 780, "right": 190, "action": "line_recovered"},
+        {"timestamp": 11.0, "left": 195, "center": 820, "right": 205, "action": "forward"},
+        {"timestamp": 12.0, "left": 200, "center": 825, "right": 200, "action": "forward"}
+      ]
+    },
+    "sharp_curve": {
+      "description": "Robot navigating through a sharp S-curve",
+      "duration": 15,
+      "sensor_data": [
+        {"timestamp": 0.0, "left": 200, "center": 800, "right": 200, "action": "forward"},
+        {"timestamp": 1.0, "left": 300, "center": 700, "right": 150, "action": "curve_approaching"},
+        {"timestamp": 2.0, "left": 500, "center": 500, "right": 100, "action": "sharp_left_curve_start"},
+        {"timestamp": 3.0, "left": 750, "center": 300, "right": 50, "action": "deep_left_curve"},
+        {"timestamp": 4.0, "left": 600, "center": 500, "right": 80, "action": "left_curve_exit"},
+        {"timestamp": 5.0, "left": 400, "center": 700, "right": 150, "action": "straightening"},
+        {"timestamp": 6.0, "left": 250, "center": 750, "right": 200, "action": "brief_straight"},
+        {"timestamp": 7.0, "left": 150, "center": 700, "right": 300, "action": "right_curve_approaching"},
+        {"timestamp": 8.0, "left": 100, "center": 500, "right": 500, "action": "sharp_right_curve_start"},
+        {"timestamp": 9.0, "left": 50, "center": 300, "right": 750, "action": "deep_right_curve"},
+        {"timestamp": 10.0, "left": 80, "center": 500, "right": 600, "action": "right_curve_exit"},
+        {"timestamp": 11.0, "left": 150, "center": 700, "right": 400, "action": "straightening_after_right"},
+        {"timestamp": 12.0, "left": 200, "center": 750, "right": 250, "action": "nearly_straight"},
+        {"timestamp": 13.0, "left": 190, "center": 800, "right": 210, "action": "forward"},
+        {"timestamp": 14.0, "left": 200, "center": 820, "right": 200, "action": "forward"},
+        {"timestamp": 15.0, "left": 195, "center": 815, "right": 205, "action": "forward"}
+      ]
+    },
+    "obstacle_avoidance": {
+      "description": "Robot detects obstacle and navigates around it",
+      "duration": 14,
+      "sensor_data": [
+        {"timestamp": 0.0, "left": 200, "center": 800, "right": 200, "action": "forward"},
+        {"timestamp": 1.0, "left": 180, "center": 750, "right": 180, "action": "obstacle_approaching"},
+        {"timestamp": 2.0, "left": 150, "center": 600, "right": 150, "action": "obstacle_closer"},
+        {"timestamp": 3.0, "left": 100, "center": 400, "right": 100, "action": "obstacle_detected"},
+        {"timestamp": 4.0, "left": 50, "center": 200, "right": 50, "action": "obstacle_avoidance_start"},
+        {"timestamp": 5.0, "left": 300, "center": 100, "right": 30, "action": "avoiding_left"},
+        {"timestamp": 6.0, "left": 500, "center": 80, "right": 20, "action": "going_around_left"},
+        {"timestamp": 7.0, "left": 600, "center": 300, "right": 100, "action": "around_obstacle"},
+        {"timestamp": 8.0, "left": 400, "center": 600, "right": 200, "action": "returning_to_line"},
+        {"timestamp": 9.0, "left": 300, "center": 700, "right": 250, "action": "line_reacquisition"},
+        {"timestamp": 10.0, "left": 250, "center": 750, "right": 200, "action": "back_on_line"},
+        {"timestamp": 11.0, "left": 220, "center": 800, "right": 190, "action": "stabilizing"},
+        {"timestamp": 12.0, "left": 200, "center": 820, "right": 200, "action": "forward"},
+        {"timestamp": 13.0, "left": 195, "center": 825, "right": 205, "action": "forward"},
+        {"timestamp": 14.0, "left": 200, "center": 830, "right": 200, "action": "forward"}
+      ]
+    },
+    "end_of_line": {
+      "description": "Robot reaches the end of the line",
+      "duration": 8,
+      "sensor_data": [
+        {"timestamp": 0.0, "left": 200, "center": 800, "right": 200, "action": "forward"},
+        {"timestamp": 1.0, "left": 180, "center": 750, "right": 180, "action": "line_weakening"},
+        {"timestamp": 2.0, "left": 150, "center": 600, "right": 150, "action": "approaching_end"},
+        {"timestamp": 3.0, "left": 100, "center": 400, "right": 100, "action": "line_ending"},
+        {"timestamp": 4.0, "left": 50, "center": 200, "right": 50, "action": "end_detected"},
+        {"timestamp": 5.0, "left": 30, "center": 100, "right": 30, "action": "line_lost_end"},
+        {"timestamp": 6.0, "left": 25, "center": 80, "right": 25, "action": "confirmed_end"},
+        {"timestamp": 7.0, "left": 20, "center": 75, "right": 20, "action": "stop_command"},
+        {"timestamp": 8.0, "left": 20, "center": 75, "right": 20, "action": "stopped"}
+      ]
+    }
+  },
+  "sensor_thresholds": {
+    "line_detected": 400,
+    "strong_line": 600,
+    "very_strong_line": 800,
+    "no_line": 200,
+    "intersection_threshold": 700,
+    "lost_line_threshold": 150
+  },
+  "action_mapping": {
+    "forward": {"left_motor": 100, "right_motor": 100, "description": "Move straight forward"},
+    "slight_left_correction": {"left_motor": 80, "right_motor": 100, "description": "Minor left correction"},
+    "slight_right_correction": {"left_motor": 100, "right_motor": 80, "description": "Minor right correction"},
+    "sharp_left": {"left_motor": 40, "right_motor": 100, "description": "Sharp left turn"},
+    "sharp_right": {"left_motor": 100, "right_motor": 40, "description": "Sharp right turn"},
+    "stop": {"left_motor": 0, "right_motor": 0, "description": "Stop all motors"},
+    "reverse": {"left_motor": -50, "right_motor": -50, "description": "Move backward"},
+    "search_left": {"left_motor": -30, "right_motor": 60, "description": "Search for line turning left"},
+    "search_right": {"left_motor": 60, "right_motor": -30, "description": "Search for line turning right"}
+  }
+}
