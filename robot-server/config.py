@@ -14,28 +14,39 @@ CAMERA_BRIGHTNESS = 50
 CAMERA_CONTRAST = 50
 
 # GPIO Pin Assignments (BCM numbering)
+# Matches wiring diagram in docs/medi-runner-guide.md Appendix
 GPIO_PINS = {
     # Motor Driver (L298N)
-    'MOTOR_IN1': 17,
-    'MOTOR_IN2': 27,
-    'MOTOR_IN3': 22,
-    'MOTOR_IN4': 23,
-    'MOTOR_ENA': 24,
-    'MOTOR_ENB': 25,
-    
-    # IR Sensor Array
-    'IR_SENSOR_1': 6,   # Far left
-    'IR_SENSOR_2': 12,  # Left
-    'IR_SENSOR_3': 13,  # Center
-    'IR_SENSOR_4': 19,  # Right
-    'IR_SENSOR_5': 16,  # Far right
-    
-    # Audio
-    'BUZZER': 5,
-    
-    # Additional sensors (optional)
-    'ULTRASONIC_TRIG': 20,
-    'ULTRASONIC_ECHO': 21
+    # Raspberry Pi  →  Motor Controller
+    # GPIO20 [ppn=38] → ENA
+    # GPIO23 [ppn=16] → IN1
+    # GPIO22 [ppn=15] → IN2
+    # GPIO27 [ppn=13] → IN3
+    # GPIO17 [ppn=11] → IN4
+    # GPIO16 [ppn=36] → ENB
+    'MOTOR_ENA': 20,
+    'MOTOR_IN1': 23,
+    'MOTOR_IN2': 22,
+    'MOTOR_IN3': 27,
+    'MOTOR_IN4': 17,
+    'MOTOR_ENB': 16,
+
+    # IR Sensor Array (TCRT5000 5-channel)
+    # Raspberry Pi  →  IR Array
+    # GPIO5  [ppn=29] → S1  (far left)
+    # GPIO6  [ppn=31] → S2  (left)
+    # GPIO13 [ppn=33] → S3  (center)
+    # GPIO19 [ppn=35] → S4  (right)
+    # GPIO26 [ppn=37] → S5  (far right)
+    'IR_SENSOR_1': 5,    # S1 – far left
+    'IR_SENSOR_2': 6,    # S2 – left
+    'IR_SENSOR_3': 13,   # S3 – center
+    'IR_SENSOR_4': 19,   # S4 – right
+    'IR_SENSOR_5': 26,   # S5 – far right
+
+    # Buzzer
+    # GPIO24 [ppn=18] → VCC
+    'BUZZER': 24,
 }
 
 # Motor Control Settings
@@ -95,7 +106,7 @@ LOGGING = {
 
 # Development/Debug Settings
 DEBUG = True
-SIMULATION_MODE = True  # Set to True for development without hardware
+SIMULATION_MODE = False  # Set to True for development without hardware
 VERBOSE_LOGGING = True
 
 # Mission Settings

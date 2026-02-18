@@ -1,6 +1,11 @@
 """
 Motor Controller for Medi Runner Robot
 Handles movement, speed control, and motor coordination
+
+Hardware:
+    - L298N Motor Driver
+    - GPIO pins (BCM): IN1=17, IN2=27, IN3=22, IN4=23, ENA=24, ENB=25
+    - PWM frequency: 1000 Hz
 """
 
 import asyncio
@@ -8,6 +13,42 @@ import logging
 import time
 import random
 import math
+import sys
+from pathlib import Path
+
+# Ensure we can import config from the robot-server root
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    # Mock GPIO for development / testing without Pi hardware
+    class _MockPWM:
+        def start(self, duty): pass
+        def ChangeDutyCycle(self, duty): pass
+        def stop(self): pass
+
+    class _MockGPIO:
+        BCM = "BCM"
+        OUT = "OUT"
+        HIGH = 1
+        LOW = 0
+        @staticmethod
+        def setmode(mode): pass
+        @staticmethod
+        def setup(pin, mode): pass
+        @staticmethod
+        def output(pin, state): pass
+        @staticmethod
+        def PWM(pin, freq): return _MockPWM()
+        @staticmethod
+        def cleanup(channel=None): pass
+        @staticmethod
+        def setwarnings(flag): pass
+
+    GPIO = _MockGPIO()
+
+from config import GPIO_PINS, MOTOR_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -118,27 +159,73 @@ class MotorController:
         
         logger.info(f"🔧 Motor Controller initialized (simulation: {simulation_mode})")
     
+    # ---- GPIO pin references (L298N) ----
+    PIN_IN1 = GPIO_PINS.get('MOTOR_IN1', 17)
+    PIN_IN2 = GPIO_PINS.get('MOTOR_IN2', 27)
+    PIN_IN3 = GPIO_PINS.get('MOTOR_IN3', 22)
+    PIN_IN4 = GPIO_PINS.get('MOTOR_IN4', 23)
+    PIN_ENA = GPIO_PINS.get('MOTOR_ENA', 24)
+    PIN_ENB = GPIO_PINS.get('MOTOR_ENB', 25)
+    PWM_FREQ = MOTOR_SETTINGS.get('PWM_FREQUENCY', 1000)
+
+    # Direction → (IN1, IN2, IN3, IN4)
+    _DIR_MAP = {
+        'forward':  (GPIO.HIGH, GPIO.LOW,  GPIO.HIGH, GPIO.LOW),
+        'backward': (GPIO.LOW,  GPIO.HIGH, GPIO.LOW,  GPIO.HIGH),
+        'left':     (GPIO.LOW,  GPIO.HIGH, GPIO.HIGH, GPIO.LOW),
+        'right':    (GPIO.HIGH, GPIO.LOW,  GPIO.LOW,  GPIO.HIGH),
+    }
+
     async def initialize(self):
-        """Initialize motor controller"""
+        """Initialize motor controller (sets up GPIO when not in simulation)."""
         logger.info("🔧 Initializing motor systems...")
-        
+
         if self.simulation_mode:
-            # Simulate hardware initialization
             await asyncio.sleep(0.5)
             logger.info("✅ Motor simulation initialized")
         else:
-            # Real hardware initialization would go here
-            # Example: GPIO setup, motor driver initialization
-            logger.info("✅ Physical motors initialized")
-        
+            GPIO.setwarnings(False)
+            GPIO.setmode(GPIO.BCM)
+
+            # Direction pins
+            for pin in (self.PIN_IN1, self.PIN_IN2, self.PIN_IN3, self.PIN_IN4):
+                GPIO.setup(pin, GPIO.OUT)
+                GPIO.output(pin, GPIO.LOW)
+
+            # Enable / PWM pins
+            GPIO.setup(self.PIN_ENA, GPIO.OUT)
+            GPIO.setup(self.PIN_ENB, GPIO.OUT)
+
+            self.pwm_left  = GPIO.PWM(self.PIN_ENA, self.PWM_FREQ)
+            self.pwm_right = GPIO.PWM(self.PIN_ENB, self.PWM_FREQ)
+            self.pwm_left.start(0)
+            self.pwm_right.start(0)
+
+            logger.info(
+                f"✅ GPIO initialised  IN1={self.PIN_IN1} IN2={self.PIN_IN2} "
+                f"IN3={self.PIN_IN3} IN4={self.PIN_IN4} "
+                f"ENA={self.PIN_ENA} ENB={self.PIN_ENB} PWM@{self.PWM_FREQ}Hz"
+            )
+
         self.is_initialized = True
         return True
-    
+
     async def cleanup(self):
-        """Cleanup motor controller"""
+        """Cleanup motor controller – stop motors and release GPIO."""
         if self.is_moving:
             await self.stop()
-        
+
+        if not self.simulation_mode:
+            try:
+                if hasattr(self, 'pwm_left'):
+                    self.pwm_left.stop()
+                if hasattr(self, 'pwm_right'):
+                    self.pwm_right.stop()
+                GPIO.cleanup()
+                logger.info("✅ GPIO cleaned up")
+            except Exception as e:
+                logger.error(f"GPIO cleanup error: {e}")
+
         logger.info("🧹 Motor controller cleanup complete")
         self.is_initialized = False
     
@@ -172,38 +259,44 @@ class MotorController:
             "status": "completed"
         }
     
+    def _gpio_all_low(self):
+        """Set all direction pins LOW and PWM to 0 – immediate physical stop."""
+        for pin in (self.PIN_IN1, self.PIN_IN2, self.PIN_IN3, self.PIN_IN4):
+            GPIO.output(pin, GPIO.LOW)
+        if hasattr(self, 'pwm_left'):
+            self.pwm_left.ChangeDutyCycle(0)
+        if hasattr(self, 'pwm_right'):
+            self.pwm_right.ChangeDutyCycle(0)
+
     async def stop(self):
         """Stop all motor movement"""
         logger.info("🛑 Stopping robot movement")
-        
+
         self.left_motor_speed = 0
         self.right_motor_speed = 0
         self.is_moving = False
         self.current_direction = "stopped"
-        
+
         if self.simulation_mode:
-            await asyncio.sleep(0.1)  # Simulate stop delay
+            await asyncio.sleep(0.1)
         else:
-            # Physical motor stop would go here
-            pass
-        
+            self._gpio_all_low()
+
         logger.info("✅ Robot stopped")
         return {"action": "stop", "status": "completed"}
-    
+
     async def emergency_stop(self):
-        """Emergency stop - immediate halt"""
+        """Emergency stop – immediate halt, cuts power to motors."""
         logger.warning("🚨 EMERGENCY STOP ACTIVATED")
-        
-        # Immediate stop
+
         self.left_motor_speed = 0
         self.right_motor_speed = 0
         self.is_moving = False
         self.current_direction = "emergency_stopped"
-        
+
         if not self.simulation_mode:
-            # Cut power to motors immediately for safety
-            pass
-        
+            self._gpio_all_low()
+
         logger.warning("🚨 Emergency stop completed")
         return {"action": "emergency_stop", "status": "executed"}
     
@@ -309,11 +402,51 @@ class MotorController:
         self.position["angle"] = self.position["angle"] % 360
     
     async def _execute_physical_movement(self, direction, speed, duration):
-        """Execute movement on physical hardware"""
-        # This would interface with actual motor drivers
-        # Example: PWM signals, motor driver commands, etc.
-        logger.info("🔩 Physical movement not implemented - simulation only")
-        await self._simulate_movement(direction, speed, duration)
+        """Drive the L298N motor driver via GPIO."""
+        self.is_moving = True
+        self.current_direction = direction
+
+        # --- Set direction pins ---
+        pins = self._DIR_MAP.get(direction)
+        if pins is None:
+            logger.error(f"Unknown direction: {direction}")
+            return
+
+        in1, in2, in3, in4 = pins
+        GPIO.output(self.PIN_IN1, in1)
+        GPIO.output(self.PIN_IN2, in2)
+        GPIO.output(self.PIN_IN3, in3)
+        GPIO.output(self.PIN_IN4, in4)
+
+        # --- Set speed via PWM ---
+        duty = max(0, min(100, speed))
+        if hasattr(self, 'pwm_left') and hasattr(self, 'pwm_right'):
+            self.pwm_left.ChangeDutyCycle(duty)
+            self.pwm_right.ChangeDutyCycle(duty)
+
+        # Track motor speeds (used by status / position tracking)
+        if direction == 'forward':
+            self.left_motor_speed = speed
+            self.right_motor_speed = speed
+        elif direction == 'backward':
+            self.left_motor_speed = -speed
+            self.right_motor_speed = -speed
+        elif direction == 'left':
+            self.left_motor_speed = -speed // 2
+            self.right_motor_speed = speed // 2
+        elif direction == 'right':
+            self.left_motor_speed = speed // 2
+            self.right_motor_speed = -speed // 2
+
+        logger.info(
+            f"🔩 GPIO  IN1={in1} IN2={in2} IN3={in3} IN4={in4}  "
+            f"PWM={duty}%  dir={direction}"
+        )
+
+        # Auto-stop after duration (0 = continuous)
+        if duration > 0:
+            await asyncio.sleep(duration)
+            await self.stop()
     
     async def _get_encoder_data(self):
         """Get data from motor encoders (physical hardware)"""

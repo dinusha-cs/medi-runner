@@ -2,40 +2,112 @@
 
 ## Overview
 
-The Medi Runner system follows a distributed architecture with three main components:
+The Medi Runner system follows a distributed architecture with four main components:
 
-1. **Robot Server** (Raspberry Pi) - Controls hardware and autonomous behaviors
-2. **Controller Backend** (Node.js) - Manages communication and data processing
-3. **Controller Frontend** (Next.js) - Provides user interface and mission control
+1. **Robot Controller API** (Raspberry Pi, FastAPI) - REST API exposing movement, sensor, buzzer, and mode endpoints
+2. **ZeroClaw Agent** (Raspberry Pi, Python) - Autonomous line-following agent that reads IR sensors and camera, sends movement commands via the API
+3. **Controller Backend** (Node.js) - Manages communication, missions, and data processing
+4. **Controller Frontend** (Next.js) - Manual control UI, dashboard, video streaming
+
+```
+┌──────────────────┐         ┌─────────────────────────┐
+│  Controller       │  HTTP   │  Robot Controller API    │
+│  Frontend (Next.js)├───────►│  (FastAPI :8000)         │
+│  - Manual control │         │                         │
+│  - Dashboard      │         │  POST /api/robot/forward│
+│  - Video stream   │         │  POST /api/robot/left   │
+│  - Mode switch    │         │  POST /api/robot/right  │
+└──────────────────┘         │  POST /api/robot/backward│
+                              │  POST /api/robot/stop   │
+┌──────────────────┐         │  GET  /api/robot/status  │
+│  ZeroClaw Agent   │  HTTP   │  GET  /api/robot/sensors/ir│
+│  (Python)         ├───────►│  POST /api/robot/buzzer  │
+│                   │         │  GET  /api/robot/mode    │
+│  AUTONOMOUS ONLY  │         │  POST /api/robot/mode    │
+│  - Reads IR array │         │                         │
+│  - Reads camera   │         │  ┌──────────────────┐   │
+│  - PID control    │         │  │ GPIO / Hardware   │   │
+│  - Line following │         │  │ L298N motors      │   │
+└──────────────────┘         │  │ TCRT5000 IR (5ch) │   │
+                              │  │ Pi Camera V1.3    │   │
+┌──────────────────┐  WS     │  │ Buzzer GPIO24     │   │
+│ Controller Backend├───────►│  └──────────────────┘   │
+│ (Node.js :3001)   │         └─────────────────────────┘
+└──────────────────┘
+```
+
+### Operating Modes
+
+| Mode | Who controls | Frontend | ZeroClaw |
+|------|-------------|----------|----------|
+| **Manual** | Human via Frontend | Active – sends movement commands | Paused – skips control loop |
+| **Autonomous** | ZeroClaw Agent | Read-only dashboard + mode switch | Active – reads IR, drives motors |
 
 ## Component Architecture
 
-### Robot Server (Raspberry Pi)
+### Robot Controller API (FastAPI – Raspberry Pi)
 
 ```python
-robot_server/
-├── main.py                 # Main application entry
-├── controllers/
-│   ├── motor_controller.py # Motor control and movement
-│   ├── sensor_controller.py # IR sensors and camera
-│   └── navigation_controller.py # Path planning and following
+robot-server/
+├── api_server.py              # FastAPI REST API (movement, sensors, buzzer, mode)
+├── zeroclaw_agent.py          # ZeroClaw autonomous line-following agent
+├── config.py                  # GPIO pins, motor/sensor settings
+├── robot/
+│   ├── motor_controller.py    # L298N motor driver (GPIO PWM)
+│   ├── sensor_controller.py   # Sensor abstraction
+│   └── navigation_controller.py
+├── controllers/               # Legacy controllers
 ├── services/
-│   ├── websocket_client.py # Communication with backend
-│   ├── computer_vision.py  # Image processing and recognition
-│   └── mission_executor.py # Task execution logic
-├── config/
-│   ├── hardware_config.py  # GPIO pins and hardware settings
-│   └── ai_config.py       # CV and AI model configurations
+│   ├── websocket_server.py    # WS bridge (backend ↔ robot)
+│   ├── computer_vision.py     # Camera / sign detection
+│   └── mission_executor.py
+├── tests/
+│   ├── test_api.py            # 44 tests – API + motor controller
+│   └── test_zeroclaw.py       # 25 tests – ZeroClaw agent + new endpoints
 └── utils/
-    ├── logger.py          # Logging utilities
-    └── helpers.py         # Common helper functions
+    └── logger.py
 ```
 
-**Key Responsibilities:**
-- Hardware control (motors, sensors, camera)
-- Real-time navigation and obstacle avoidance
-- Computer vision processing
-- Mission execution and status reporting
+**REST API Endpoints:**
+
+```
+POST /api/robot/forward      Move forward  { speed, duration }
+POST /api/robot/backward     Move backward { speed, duration }
+POST /api/robot/left         Turn left     { speed, duration }
+POST /api/robot/right        Turn right    { speed, duration }
+POST /api/robot/stop         Stop motors
+GET  /api/robot/status       Motor status, position, encoders
+GET  /api/robot/sensors/ir   Read TCRT5000 5-ch IR array [S1..S5]
+GET  /api/robot/mode         Get current mode (manual|autonomous)
+POST /api/robot/mode         Set mode      { mode }
+POST /api/robot/buzzer       Beep buzzer   { times, duration }
+GET  /health                 Health check
+```
+
+### ZeroClaw Agent (Python – runs on Raspberry Pi)
+
+```
+zeroclaw_agent.py
+├── ZeroClawAgent              # Main agent class
+│   ├── run()                  # Entry – sets autonomous, starts loop
+│   ├── _control_step()        # Read IR → PID → move command
+│   ├── compute_line_error()   # 5-sensor → error in [-2, +2]
+│   ├── read_ir()              # GET /api/robot/sensors/ir
+│   ├── api_forward/left/…()   # POST /api/robot/{direction}
+│   └── shutdown()             # Stop motors, restore manual mode
+├── PID                        # Lightweight PID controller
+└── AgentConfig                # Tuneable params (speed, PID gains)
+```
+
+**Behaviour:**
+1. On start → calls `POST /api/robot/mode { "autonomous" }`
+2. Every 50 ms (20 Hz):
+   - `GET /api/robot/mode` → skip if not autonomous
+   - `GET /api/robot/sensors/ir` → read [S1..S5]
+   - Compute weighted line error (0 = line, 1 = floor)
+   - PID correction → pick direction + speed
+   - `POST /api/robot/{forward|left|right}` → move
+3. On shutdown → `POST /api/robot/stop` + `POST /api/robot/mode { "manual" }`
 
 ### Controller Backend (Node.js)
 
