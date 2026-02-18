@@ -31,6 +31,9 @@
     - [POST /api/robot/buzzer](#post-apirobotbuzzer)
   - [Diagnostics](#diagnostics)
     - [GET /health](#get-health)
+  - [Camera](#camera)
+    - [GET /api/robot/camera/stream](#get-apirobotcamerastream)
+    - [GET /api/robot/camera/snapshot](#get-apirobotcamerasnapshot)
 - [Request / Response Models](#request--response-models)
 - [Error Handling](#error-handling)
 - [Hardware Pin Reference](#hardware-pin-reference)
@@ -549,6 +552,90 @@ curl http://localhost:8000/health
 
 ---
 
+### Camera
+
+The Pi Camera V1.3 (5MP, CSI ribbon) is exposed via two endpoints. The **MJPEG stream** is the recommended way to display live video in the frontend — it works natively in an `<img>` tag with no JavaScript decoding required.
+
+#### GET /api/robot/camera/stream
+
+Live MJPEG video stream. The server keeps the HTTP connection open and pushes JPEG frames as `multipart/x-mixed-replace` boundaries.
+
+**Response:** `Content-Type: multipart/x-mixed-replace; boundary=frame`
+
+Each frame:
+```
+--frame
+Content-Type: image/jpeg
+Content-Length: <bytes>
+
+<JPEG binary data>
+```
+
+**Frontend Usage (recommended):**
+
+```html
+<!-- Just point an <img> at the endpoint — the browser handles the rest -->
+<img src="http://<pi-ip>:8000/api/robot/camera/stream" alt="Live Feed" />
+```
+
+```tsx
+// React / Next.js component
+const ROBOT_API = process.env.NEXT_PUBLIC_ROBOT_API || 'http://localhost:8000';
+
+<img
+  src={`${ROBOT_API}/api/robot/camera/stream`}
+  alt="Robot Camera Feed"
+  style={{ width: '100%', objectFit: 'contain' }}
+/>
+```
+
+**Why MJPEG and not WebSocket / WebRTC?**
+
+| Approach | Latency | Complexity | This Project |
+|----------|---------|------------|--------------|
+| **MJPEG `<img>`** | ~100ms | Trivial | **Best fit** — local WiFi, 640×480, all browsers |
+| WS base64 frames | ~150ms | Medium | Needed only if relaying through Node.js backend |
+| WebRTC | ~50ms | High (STUN/TURN) | Overkill for local network |
+
+**Example:**
+
+```bash
+# Stream in terminal (will dump JPEG frames)
+curl http://localhost:8000/api/robot/camera/stream --output -
+
+# Open in browser — just navigate to the URL
+# http://localhost:8000/api/robot/camera/stream
+```
+
+**Error (503):** Camera not available (library missing or hardware not connected).
+
+---
+
+#### GET /api/robot/camera/snapshot
+
+Capture a single JPEG frame from the camera.
+
+**Response:** `Content-Type: image/jpeg` (raw JPEG binary)
+
+Useful for:
+- 360° panoramic capture (take snapshots while rotating the robot)
+- Debugging / logging
+- Signboard detection (capture → send to vision model)
+
+**Example:**
+
+```bash
+# Save a snapshot
+curl http://localhost:8000/api/robot/camera/snapshot --output snapshot.jpg
+
+# View in browser
+# http://localhost:8000/api/robot/camera/snapshot
+```
+
+**Error (503):** Camera not available.
+
+---
+
 ## Request / Response Models
 
 ### MoveRequest
@@ -687,6 +774,24 @@ Camera settings (from `config.py`):
 - Resolution: 640 × 480
 - FPS: 30
 - Rotation: 0°
+
+**Streaming architecture:**
+```
+  Pi Camera V1.3 (CSI)
+        │
+        ▼
+  picamera2 / picamera (Python)
+        │
+        ▼
+  FastAPI endpoint
+  GET /api/robot/camera/stream
+        │  multipart/x-mixed-replace (MJPEG)
+        ▼
+  Browser <img src="…/stream" />    ◄── Controller Frontend (Next.js)
+        │
+        └── No WebSocket or Backend relay needed
+            Direct HTTP from browser to Pi
+```
 
 ---
 

@@ -38,7 +38,8 @@ from pydantic import BaseModel, Field
 sys.path.insert(0, str(Path(__file__).parent))
 
 from config import (
-    SIMULATION_MODE, GPIO_PINS, MOTOR_SETTINGS, LOGGING as LOG_CFG
+    SIMULATION_MODE, GPIO_PINS, MOTOR_SETTINGS, LOGGING as LOG_CFG,
+    CAMERA_RESOLUTION, CAMERA_FPS, CAMERA_ROTATION,
 )
 from robot.motor_controller import MotorController
 from robot.sensor_controller import SensorController
@@ -340,6 +341,180 @@ async def set_mode(req: ModeRequest):
         f"Mode changed from {old} to {robot_mode}",
         {"mode": robot_mode, "previous": old},
     )
+
+
+# ---------------------------------------------------------------------------
+# Camera streaming (MJPEG)
+# ---------------------------------------------------------------------------
+# MJPEG is the simplest and most compatible way to stream video to a browser.
+# The frontend connects directly via <img src="http://PI:8000/api/robot/camera/stream" />
+# No WebSocket relay needed – browser-native, low-latency on local network.
+# ---------------------------------------------------------------------------
+
+from fastapi.responses import StreamingResponse, Response
+
+# Try to import picamera2 (Raspberry Pi OS Bookworm) or fallback to legacy picamera
+_camera = None
+_camera_lock = asyncio.Lock()
+
+
+def _init_camera():
+    """Lazy-init the Pi camera. Returns a capture-callable or None."""
+    global _camera
+    if _camera is not None:
+        return _camera
+
+    if SIMULATION_MODE:
+        # Return a dummy JPEG generator for dev/test
+        import io
+        try:
+            from PIL import Image, ImageDraw, ImageFont
+        except ImportError:
+            Image = None
+
+        class _SimCamera:
+            """Generate a placeholder JPEG frame with a timestamp."""
+            def capture_frame(self) -> bytes:
+                if Image is None:
+                    # Minimal 1×1 black JPEG if Pillow not installed
+                    return (
+                        b'\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00'
+                        b'\x01\x00\x01\x00\x00\xff\xdb\x00C\x00\x08\x06\x06'
+                        b'\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0c\x14\r'
+                        b'\x0c\x0b\x0b\x0c\x19\x12\x13\x0f\x14\x1d\x1a\x1f'
+                        b'\x1e\x1d\x1a\x1c\x1c $.\' ",#\x1c\x1c(7),01444\x1f'
+                        b"'9=82<.342\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01"
+                        b'\x01\x11\x00\xff\xc4\x00\x1f\x00\x00\x01\x05\x01'
+                        b'\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00'
+                        b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\xff'
+                        b'\xc4\x00\xb5\x10\x00\x02\x01\x03\x03\x02\x04\x03'
+                        b'\x05\x05\x04\x04\x00\x00\x01}\x01\x02\x03\x00\x04'
+                        b'\x11\x05\x12!1A\x06\x13Qa\x07"q\x142\x81\x91\xa1'
+                        b'\x08#B\xb1\xc1\x15R\xd1\xf0$3br\x82\t\n\x16\x17'
+                        b'\x18\x19\x1a%&\'()*456789:CDEFGHIJSTUVWXYZcdefghij'
+                        b'stuvwxyz\xff\xda\x00\x08\x01\x01\x00\x00?\x00\xfb'
+                        b'R\xa8\xa0\x02\x80\x0f\xff\xd9'
+                    )
+                w, h = CAMERA_RESOLUTION
+                img = Image.new("RGB", (w, h), (30, 30, 40))
+                draw = ImageDraw.Draw(img)
+                txt = f"SIMULATION  {time.strftime('%H:%M:%S')}"
+                draw.text((w // 2 - 80, h // 2 - 10), txt, fill=(0, 255, 100))
+                draw.rectangle([0, 0, w - 1, h - 1], outline=(0, 255, 100))
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG", quality=70)
+                return buf.getvalue()
+
+        _camera = _SimCamera()
+        return _camera
+
+    # --- Real hardware ---
+    try:
+        from picamera2 import Picamera2
+        cam = Picamera2()
+        cam_config = cam.create_video_configuration(
+            main={"size": CAMERA_RESOLUTION, "format": "RGB888"}
+        )
+        cam.configure(cam_config)
+        cam.start()
+
+        import io
+
+        class _PiCamera2Wrapper:
+            def capture_frame(self) -> bytes:
+                import io as _io
+                buf = _io.BytesIO()
+                cam.capture_file(buf, format="jpeg")
+                return buf.getvalue()
+
+        _camera = _PiCamera2Wrapper()
+        logger.info("Pi Camera initialised (picamera2)")
+        return _camera
+
+    except ImportError:
+        pass
+
+    try:
+        import picamera
+
+        class _LegacyPiCamera:
+            def __init__(self):
+                self.cam = picamera.PiCamera()
+                self.cam.resolution = CAMERA_RESOLUTION
+                self.cam.framerate = CAMERA_FPS
+                self.cam.rotation = CAMERA_ROTATION
+
+            def capture_frame(self) -> bytes:
+                import io as _io
+                buf = _io.BytesIO()
+                self.cam.capture(buf, format="jpeg", use_video_port=True)
+                return buf.getvalue()
+
+        _camera = _LegacyPiCamera()
+        logger.info("Pi Camera initialised (legacy picamera)")
+        return _camera
+
+    except ImportError:
+        logger.warning("No camera library available – camera endpoints disabled")
+        return None
+
+
+async def _mjpeg_generator():
+    """Yield JPEG frames as multipart/x-mixed-replace boundaries."""
+    cam = _init_camera()
+    if cam is None:
+        return
+    fps = CAMERA_FPS
+    interval = 1.0 / fps
+    while True:
+        try:
+            frame = cam.capture_frame()
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n"
+                b"Content-Length: " + str(len(frame)).encode() + b"\r\n"
+                b"\r\n" + frame + b"\r\n"
+            )
+            await asyncio.sleep(interval)
+        except Exception as e:
+            logger.error(f"MJPEG frame error: {e}")
+            await asyncio.sleep(0.5)
+
+
+@app.get("/api/robot/camera/stream")
+async def camera_stream():
+    """
+    Live MJPEG video stream from Pi Camera V1.3.
+
+    Usage in browser / frontend:
+        <img src="http://<pi-ip>:8000/api/robot/camera/stream" />
+
+    This is the recommended way to display the live feed – works in all
+    browsers, no JavaScript needed, ~100 ms latency on local WiFi.
+    """
+    cam = _init_camera()
+    if cam is None:
+        raise HTTPException(status_code=503, detail="Camera not available")
+    return StreamingResponse(
+        _mjpeg_generator(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+    )
+
+
+@app.get("/api/robot/camera/snapshot")
+async def camera_snapshot():
+    """
+    Capture a single JPEG snapshot from the Pi Camera.
+
+    Returns the raw JPEG image (Content-Type: image/jpeg).
+    Useful for the 360° panoramic capture (take multiple snapshots while
+    rotating) or for debugging.
+    """
+    cam = _init_camera()
+    if cam is None:
+        raise HTTPException(status_code=503, detail="Camera not available")
+    frame = cam.capture_frame()
+    return Response(content=frame, media_type="image/jpeg")
 
 
 # ---------------------------------------------------------------------------

@@ -22,9 +22,9 @@ pwm_b.start(0)
 
 def move_forward(speed):
     """Both motors spin forward"""
-    GPIO.output(IN1, GPIO.HIGH)
+    GPIO.output(IN1, GPIO.LOW)
     GPIO.output(IN2, GPIO.HIGH)
-    GPIO.output(IN3, GPIO.LOW)
+    GPIO.output(IN3, GPIO.HIGH)
     GPIO.output(IN4, GPIO.LOW)
     pwm_a.ChangeDutyCycle(speed)
     pwm_b.ChangeDutyCycle(speed)
@@ -33,8 +33,8 @@ def move_backward(speed):
     """Both motors spin backward"""
     GPIO.output(IN1, GPIO.HIGH)
     GPIO.output(IN2, GPIO.LOW)
-    GPIO.output(IN3, GPIO.HIGH)
-    GPIO.output(IN4, GPIO.LOW)
+    GPIO.output(IN3, GPIO.LOW)
+    GPIO.output(IN4, GPIO.HIGH)
     pwm_a.ChangeDutyCycle(speed)
     pwm_b.ChangeDutyCycle(speed)
 
@@ -73,67 +73,47 @@ def take_snapshot():
 
 # --- MISSION SEQUENCE ---
 
-# IN1 -> RF
-
 try:
     print("Mission Started.")
-    # move_forward(60)
-    # time.sleep(1)
-
-    # stop(1)
-
-    # move_backward(60)
-    # time.sleep(1)
-
-    GPIO.output(IN1, GPIO.LOW)
-    GPIO.output(IN2, GPIO.LOW)
-    GPIO.output(IN3, GPIO.HIGH)
-    GPIO.output(IN4, GPIO.HIGH)
-    # pwm_a.ChangeDutyCycle(60)
-    # pwm_a.ChangeDutyCycle(60)
-    pwm_a.ChangeDutyCycle(60)
-    pwm_b.ChangeDutyCycle(60)
-    time.sleep(10)
     
+    # 2 seconds forward
+    move_forward(60)
+    time.sleep(1)
     
-    # # 2 seconds forward
-    # move_forward(60)
-    # time.sleep(1)
+    # Stop for 1 second
+    stop(1)
     
-    # # Stop for 1 second
-    # stop(1)
-    
-    # # # Turn right for 2 seconds
-    # turn_right(60)
-    # time.sleep(1) 
+    # # Turn right for 2 seconds
+    turn_right(60)
+    time.sleep(1) 
 
-    # stop(1)
+    stop(1)
 
-    # move_forward(60)
-    # time.sleep(2)
+    move_forward(60)
+    time.sleep(2)
 
-    # stop(1)
+    stop(1)
 
-    # turn_left(60)
-    # time.sleep(1)
+    turn_left(60)
+    time.sleep(1)
 
-    # stop(1)
+    stop(1)
 
-    # move_forward(60)
-    # time.sleep(2)
+    move_forward(60)
+    time.sleep(2)
 
-    # stop(1)
+    stop(1)
 
-    # #SS
+    #SS
+    take_snapshot()
+
+    move_backward(60)
+    time.sleep(2)
+
+    stop()
+    print("Mission Finished Successfully.")
+
     # take_snapshot()
-
-    # move_backward(60)
-    # time.sleep(2)
-
-    # stop()
-    # print("Mission Finished Successfully.")
-
-    # # take_snapshot()
 
 
 except KeyboardInterrupt:
