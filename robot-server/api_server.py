@@ -21,12 +21,12 @@ Endpoints:
     GET  /api/robot/status    - Get robot status
     POST /api/robot/buzzer    - Activate buzzer
     GET  /api/robot/voltage   - Get Raspberry Pi input voltage
+    GET  /api/robot/sensors/ir - Read IR sensor array
+    GET  /api/robot/mode      - Get current mode
+    POST /api/robot/mode      - Switch mode (manual/autonomous)
+    GET  /api/robot/camera/stream    - Live MJPEG video stream
+    GET  /api/robot/camera/snapshot  - Single JPEG capture
     POST /api/robot/camera/panoramic - Capture 360° panoramic photo
-    POST /api/robot/mission   - Start autonomous mission to target
-    GET  /api/robot/mission   - Get current mission status
-    POST /api/robot/mission/cancel - Cancel current mission
-    GET  /api/robot/track/map - Get track map data
-    POST /api/robot/track/node - Add/update a track node
 """
 
 import asyncio

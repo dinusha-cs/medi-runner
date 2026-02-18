@@ -30,13 +30,16 @@
   - [Peripherals](#peripherals)
     - [POST /api/robot/buzzer](#post-apirobotbuzzer)
   - [Diagnostics](#diagnostics)
+    - [GET /api/robot/voltage](#get-apirobotvoltage)
     - [GET /health](#get-health)
   - [Camera](#camera)
     - [GET /api/robot/camera/stream](#get-apirobotcamerastream)
     - [GET /api/robot/camera/snapshot](#get-apirobotcamerasnapshot)
+    - [POST /api/robot/camera/panoramic](#post-apirobotcamerapanoramic)
 - [Request / Response Models](#request--response-models)
 - [Error Handling](#error-handling)
 - [Hardware Pin Reference](#hardware-pin-reference)
+- [Zone Color Detection Service](#zone-color-detection-service)
 - [ZeroClaw Agent API Usage](#zeroclaw-agent-api-usage)
 ---
 
@@ -521,6 +524,55 @@ curl -X POST http://localhost:8000/api/robot/buzzer \
 
 ### Diagnostics
 
+#### GET /api/robot/voltage
+
+Return the Raspberry Pi core voltage, CPU temperature, and throttling status.
+
+**Request:** No parameters.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "action": "voltage",
+  "message": "Raspberry Pi voltage info",
+  "data": {
+    "core_voltage_v": 1.35,
+    "cpu_temp_c": 42.0,
+    "throttled": "0x0"
+  },
+  "timestamp": 1740000004.000
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `core_voltage_v` | `float \| null` | Core voltage in volts (via `vcgencmd`) |
+| `cpu_temp_c` | `float \| null` | CPU temperature in °C |
+| `throttled` | `string \| null` | Throttle status hex flags (see [RPi docs](https://www.raspberrypi.com/documentation/computers/os.html#get_throttled)) |
+
+**Throttle Flags Reference:**
+
+| Bit | Hex | Meaning |
+|-----|-----|---------|
+| 0 | `0x1` | Under-voltage detected |
+| 1 | `0x2` | Arm frequency capped |
+| 2 | `0x4` | Currently throttled |
+| 3 | `0x8` | Soft temperature limit active |
+| 16 | `0x10000` | Under-voltage has occurred |
+| 17 | `0x20000` | Arm frequency capping has occurred |
+| 18 | `0x40000` | Throttling has occurred |
+| 19 | `0x80000` | Soft temperature limit has occurred |
+
+**Example:**
+
+```bash
+curl http://localhost:8000/api/robot/voltage
+```
+
+---
+
 #### GET /health
 
 Simple health-check endpoint to verify the API is running.
@@ -622,6 +674,82 @@ curl http://localhost:8000/api/robot/camera/snapshot --output snapshot.jpg
 
 ---
 
+#### POST /api/robot/camera/panoramic
+
+Capture a 360° panoramic set of images by rotating the robot in place and taking a snapshot at each step.
+
+**Request Body** (optional):
+
+```json
+{
+  "steps": 12,
+  "turn_speed": 40,
+  "turn_duration": 0.3,
+  "settle_delay": 0.2
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `steps` | `int` | `12` | Number of snapshots to take (360° / steps = degrees per step) |
+| `turn_speed` | `int` | `40` | Motor speed during each rotation step (0–100) |
+| `turn_duration` | `float` | `0.3` | Seconds to rotate between each shot |
+| `settle_delay` | `float` | `0.2` | Seconds to wait after turning before capturing |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "action": "panoramic",
+  "message": "Captured 12 frames for 360° panorama",
+  "data": {
+    "steps": 12,
+    "degrees_per_step": 30.0,
+    "frames": [
+      {
+        "index": 0,
+        "angle_deg": 0.0,
+        "jpeg_b64": "/9j/4AAQ...(base64)..."
+      },
+      {
+        "index": 1,
+        "angle_deg": 30.0,
+        "jpeg_b64": "/9j/4AAQ...(base64)..."
+      }
+    ]
+  },
+  "timestamp": 1740000005.000
+}
+```
+
+**Process:**
+
+```
+1. Capture frame at current heading (0°)
+2. Turn right → settle_delay → capture
+3. Repeat (steps - 1) more times
+4. Return all frames as base64-encoded JPEGs
+```
+
+The frontend can stitch these images into a full panoramic view.
+
+**Example:**
+
+```bash
+# Default 12 steps (30° apart)
+curl -X POST http://localhost:8000/api/robot/camera/panoramic
+
+# 8 steps (45° apart) with slower turns
+curl -X POST http://localhost:8000/api/robot/camera/panoramic \
+  -H "Content-Type: application/json" \
+  -d '{"steps": 8, "turn_speed": 30, "turn_duration": 0.5}'
+```
+
+**Error (503):** Camera not available.
+
+---
+
 ## Request / Response Models
 
 ### MoveRequest
@@ -645,6 +773,16 @@ class BuzzerRequest(BaseModel):
 ```python
 class ModeRequest(BaseModel):
     mode: str = Field(..., pattern="^(manual|autonomous)$")
+```
+
+### PanoramicRequest
+
+```python
+class PanoramicRequest(BaseModel):
+    steps: int = 12            # number of snapshots
+    turn_speed: int = 40       # motor speed while turning
+    turn_duration: float = 0.3 # seconds to turn between shots
+    settle_delay: float = 0.2  # seconds to wait before capture
 ```
 
 ### RobotResponse
@@ -781,6 +919,73 @@ Camera settings (from `config.py`):
 
 ---
 
+## Zone Color Detection Service
+
+The `services/color_detect.py` module provides HSV-based zone colour detection for the Medi-Runner competition. It is used by the ZeroClaw Agent to identify floor zones and trigger the correct beep pattern.
+
+### Supported Colours & Beep Mapping
+
+| Zone Colour | Beeps | HSV Hue Range |
+|-------------|-------|---------------|
+| Blue | 1 beep | 90–130 |
+| Red | 2 quick beeps | 0–10, 160–179 |
+| Green | 3 quick beeps | 35–85 |
+| Yellow | 4 quick beeps | 18–35 |
+| Destination | 5 beeps (long) | — |
+
+### API
+
+```python
+from services.color_detect import detect_zone_color, ZONE_BEEP_MAP
+
+# Detect colour from a BGR camera frame
+colour, confidence, counts = detect_zone_color(bgr_frame)
+# colour: "blue" | "red" | "green" | "yellow" | "unknown"
+# confidence: 0.0–1.0
+# counts: {"blue": 1234, "red": 56, "green": 78, "yellow": 910}
+
+# Get beep count for a zone
+beeps = ZONE_BEEP_MAP.get(colour, 0)  # e.g. "red" → 2
+```
+
+### Detection Region of Interest (ROI)
+
+The detector analyses the bottom-centre strip of the camera frame (the floor directly in front of the robot):
+
+```
+  ┌─────────────────────────┐
+  │                         │  0%
+  │      (sky / walls)      │
+  │                         │
+  ├────┬───────────────┬────┤  55%  ← ROI_TOP_FRAC
+  │    │  DETECTION ROI │    │
+  │    │  (floor zone)  │    │
+  │    │               │    │
+  ├────┴───────────────┴────┤  90%  ← ROI_BOTTOM_FRAC
+  │       (too close)       │
+  └─────────────────────────┘ 100%
+       20%            80%
+   ROI_LEFT       ROI_RIGHT
+```
+
+Minimum confidence threshold: **8%** of ROI pixels must match for a valid detection.
+
+### Calibration
+
+HSV ranges are defined in `COLOR_RANGES` at the top of the module. Adjust after testing under actual competition lighting:
+
+```python
+COLOR_RANGES = {
+    "blue":   [((90, 80, 50), (130, 255, 255))],
+    "red":    [((0, 80, 50), (10, 255, 255)),
+               ((160, 80, 50), (179, 255, 255))],
+    "green":  [((35, 60, 50), (85, 255, 255))],
+    "yellow": [((18, 80, 80), (35, 255, 255))],
+}
+```
+
+---
+
 ## ZeroClaw Agent API Usage
 
 The ZeroClaw Agent is the autonomous line-following controller. It operates **only** when `mode == "autonomous"` and communicates with hardware exclusively through this API.
@@ -799,6 +1004,23 @@ The ZeroClaw Agent is the autonomous line-following controller. It operates **on
    a. POST /api/robot/stop              → halt motors
    b. POST /api/robot/mode {"mode":"manual"} → release control
 ```
+
+### Sensor Strategy (S3-Centered)
+
+The line-following algorithm keeps **S3 (center) on the black line** at all times, with **S2 and S4 at the edges** of the line for early correction:
+
+```
+  Ideal alignment:       Drifting left:        Drifting right:
+  S1  S2  S3  S4  S5    S1  S2  S3  S4  S5    S1  S2  S3  S4  S5
+  ○   ◐   ●   ◐   ○     ○   ●   ●   ○   ○     ○   ○   ●   ●   ○
+      ┃  LINE  ┃              LINE                    LINE
+  error ≈ 0              error < 0 (left)      error > 0 (right)
+  → forward              → correct right        → correct left
+```
+
+- `●` = sensor on line (reading 0)
+- `◐` = sensor at edge
+- `○` = sensor off line (reading 1)
 
 ### PID Line-Following Algorithm
 
@@ -867,6 +1089,18 @@ python zeroclaw_agent.py --url http://192.168.1.100:8000 --speed 55
 # With PID tuning
 python zeroclaw_agent.py --kp 1.2 --ki 0.01 --kd 0.3
 ```
+
+### Planned Enhancements (Competition Stage 3)
+
+These features are planned for the ZeroClaw agent to support full autonomous navigation:
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Zone color detection | Service ready (`services/color_detect.py`) | Capture at 2 FPS, detect colour, trigger beep pattern |
+| Track map database | Planned | Store track topology (junctions, zones, targets) in SQLite |
+| Target routing | Planned | Accept target name via API, navigate using track graph |
+| PWM optimization | Planned | ZeroClaw auto-tunes PWM values based on sensor feedback |
+| Signboard detection | Planned | Read hospital signboards (X-ray→, MRI←, Emergency, ICU↑) |
 
 ---
 
