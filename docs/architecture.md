@@ -193,25 +193,25 @@ zeroclaw_agent.py
 | 0 | 0 | 0 | 0 | 0 | Intersection | Pause, then continue |
 | 1 | 1 | 1 | 1 | 1 | Line lost | Creep forward / timeout-stop |
 
-### Controller Backend (Node.js)
+### Controller Backend (Node.js :3001)
 
 ```javascript
 controller-backend/
 ├── src/
 │   ├── app.js                 # Express app configuration
 │   ├── routes/
-│   │   ├── robot.js          # Robot control endpoints
+│   │   ├── robot.js          # Robot control endpoints (proxies to FastAPI)
 │   │   ├── missions.js       # Mission management
 │   │   └── streaming.js      # Video streaming routes
 │   ├── services/
-│   │   ├── robotCommService.js # Robot communication
-│   │   ├── missionService.js  # Mission planning
-│   │   └── streamService.js   # Video stream management
+│   │   ├── robotCommService.js # HTTP client → Robot Controller API
+│   │   ├── missionService.js  # Mission planning & execution
+│   │   └── streamService.js   # Video stream proxy / relay
 │   ├── models/
 │   │   ├── Mission.js        # Mission data model
 │   │   └── Robot.js          # Robot state model
 │   └── middleware/
-│       ├── auth.js           # Authentication middleware
+│       ├── auth.js           # JWT authentication
 │       └── validation.js     # Request validation
 ├── config/
 │   └── database.js           # Database configuration
@@ -219,49 +219,89 @@ controller-backend/
 ```
 
 **Key Responsibilities:**
-- WebSocket communication with robot
-- Mission planning and management
-- User authentication and authorization
-- Real-time data streaming
-- API endpoints for frontend
+- Proxies commands from frontend to Robot Controller API when needed
+- WebSocket hub broadcasting real-time status to all connected frontends
+- Mission planning, queueing, and execution orchestration
+- User authentication (JWT) and authorization
+- Video stream relay from Pi camera to browser clients
 
-### Controller Frontend (Next.js)
+### Controller Frontend (Next.js :3000)
+
+The frontend connects to **both** the Robot Controller API (direct REST for low-latency manual control) and the Controller Backend (WebSocket for real-time events and mission management).
 
 ```javascript
-controller-front-end/
+controller-frontend/
 ├── pages/
 │   ├── index.js              # Dashboard homepage
 │   ├── control.js            # Manual robot control
 │   ├── missions.js           # Mission management
 │   └── settings.js           # System configuration
-├── components/
-│   ├── RobotControl/
-│   │   ├── ManualControl.jsx # Joystick and manual controls
-│   │   ├── StatusDisplay.jsx # Robot status indicators
-│   │   └── CameraFeed.jsx    # Live video stream
-│   ├── Mission/
-│   │   ├── MissionPlanner.jsx # Mission creation interface
-│   │   └── MissionStatus.jsx  # Active mission monitoring
-│   └── Common/
-│       ├── Navigation.jsx     # App navigation
-│       └── Layout.jsx        # Page layout wrapper
+├── src/
+│   └── components/
+│       ├── RobotControl/
+│       │   ├── ManualControl.jsx  # Virtual joystick / directional pad
+│       │   ├── StatusDisplay.jsx  # IR sensor readout, mode, speed
+│       │   ├── CameraFeed.jsx     # Live MJPEG / WebRTC video stream
+│       │   └── ModeSwitch.jsx     # Manual ↔ Autonomous toggle
+│       ├── Mission/
+│       │   ├── MissionPlanner.jsx # NL prompt → mission creation
+│       │   ├── MissionStatus.jsx  # Active mission monitoring
+│       │   └── MiniMap.jsx        # 2D graph-based path trace
+│       ├── Dashboard/
+│       │   ├── ZoneIndicator.jsx  # Current colour zone (Blue/Red/Green/Yellow)
+│       │   ├── SensorPanel.jsx    # Real-time IR S1-S5 visualisation
+│       │   └── PowerInfo.jsx      # Voltage, battery level
+│       └── Common/
+│           ├── Navigation.jsx     # App navigation
+│           └── Layout.jsx         # Page layout wrapper
 ├── services/
-│   ├── api.js               # Backend API client
-│   └── websocket.js         # WebSocket connection
+│   ├── robotApi.js           # HTTP client → Robot Controller API (direct)
+│   └── websocket.js          # WS client → Controller Backend
 ├── styles/
-└── next.config.js
+├── next.config.js
+└── package.json
 ```
 
 **Key Responsibilities:**
-- Real-time robot control interface
-- Mission planning and monitoring
-- Live video streaming display
-- System configuration and settings
-- User authentication and team management
+- Face-recognition login / enrollment with voice assistance
+- Real-time robot control interface (virtual controller → direct API calls)
+- Mode switching between manual and autonomous
+- Live video streaming from Pi Camera
+- 360° panoramic capture and viewer
+- Dashboard with live IR sensor data, zone status, speed, power
+- Natural-language mission prompt interface
+- Mini-map path trace visualisation
 
 ## Communication Protocols
 
-### WebSocket Messages
+### REST API (Robot Controller — FastAPI :8000)
+
+All hardware interaction flows through a single REST API. Full reference: [docs/api-reference.md](api-reference.md)
+
+```
+Movement
+  POST /api/robot/forward    { speed: 0-100, duration: 0+ }   → Move forward
+  POST /api/robot/backward   { speed: 0-100, duration: 0+ }   → Move backward
+  POST /api/robot/left       { speed: 0-100, duration: 0+ }   → Turn left
+  POST /api/robot/right      { speed: 0-100, duration: 0+ }   → Turn right
+  POST /api/robot/stop                                         → Stop all motors
+
+Sensors
+  GET  /api/robot/sensors/ir                                   → Read TCRT5000 [S1..S5]
+  GET  /api/robot/status                                       → Motor speeds, position
+
+Mode Control
+  GET  /api/robot/mode                                         → Current mode
+  POST /api/robot/mode       { mode: "manual"|"autonomous" }   → Switch mode
+
+Peripherals
+  POST /api/robot/buzzer     { times: 1-10, duration: 0.05-2 } → Beep buzzer
+
+Diagnostics
+  GET  /health                                                 → API health check
+```
+
+### WebSocket Messages (Controller Backend ↔ Frontend)
 
 ```json
 {
@@ -281,7 +321,8 @@ controller-front-end/
     "position": {"x": 10, "y": 5},
     "battery": 85,
     "sensors": [1, 0, 0, 1, 1],
-    "mode": "autonomous"
+    "mode": "autonomous",
+    "zone": "blue"
   },
   "timestamp": 1640995201000
 }
@@ -298,27 +339,73 @@ controller-front-end/
 }
 ```
 
-### REST API Endpoints
+### Controller Backend REST Endpoints
 
 ```
-GET    /api/robot/status        # Get current robot status
-POST   /api/robot/command       # Send command to robot
-GET    /api/missions            # List all missions
-POST   /api/missions            # Create new mission
-GET    /api/missions/:id        # Get mission details
-PUT    /api/missions/:id        # Update mission
-DELETE /api/missions/:id        # Cancel mission
-GET    /api/stream              # Video stream endpoint
-POST   /api/auth/login          # User authentication
+Robot (proxied)
+  GET    /api/robot/status        # Proxied to FastAPI /api/robot/status
+  POST   /api/robot/command       # Parse & forward to FastAPI movement endpoints
+
+Missions
+  GET    /api/missions            # List all missions
+  POST   /api/missions            # Create new mission (NL prompt parsed)
+  GET    /api/missions/:id        # Get mission details
+  PUT    /api/missions/:id        # Update mission
+  DELETE /api/missions/:id        # Cancel mission
+
+Streaming
+  GET    /api/stream              # Video stream proxy from Pi camera
+
+Auth
+  POST   /api/auth/login          # Face-recognition authentication
+  POST   /api/auth/enroll         # Enroll new face
 ```
 
 ## Data Flow
 
-1. **User Interaction**: Frontend sends commands via WebSocket
-2. **Command Processing**: Backend validates and forwards to robot
-3. **Robot Execution**: Robot processes commands and sends status updates
-4. **Real-time Updates**: Status changes broadcast to all connected clients
-5. **Mission Execution**: Autonomous missions run independently with progress updates
+### Manual Mode
+1. User opens Frontend → authenticates via face recognition
+2. Frontend calls `POST /api/robot/mode {"mode": "manual"}` on Robot Controller API
+3. User presses virtual controller → Frontend calls `POST /api/robot/forward` (direct REST)
+4. Robot Controller API drives L298N motors via GPIO PWM
+5. Frontend polls `GET /api/robot/status` and `GET /api/robot/sensors/ir` for dashboard
+6. Live video streamed from Pi Camera → Frontend `<img>` / WebRTC
+
+### Autonomous Mode
+1. User (or ZeroClaw) calls `POST /api/robot/mode {"mode": "autonomous"}`
+2. ZeroClaw Agent enters 20 Hz control loop
+3. Each tick: `GET /sensors/ir` → PID → `POST /forward|left|right`
+4. Frontend shows read-only dashboard; refreshes status via polling / WebSocket
+5. Mode can be switched back to manual from Frontend at any time
+
+### Mission Flow
+1. User enters NL prompt on Frontend (e.g. "deliver X-ray from MRI to ICU")
+2. Frontend sends prompt to Controller Backend via WebSocket
+3. Backend parses prompt → creates ordered waypoint list
+4. Backend orchestrates ZeroClaw + signboard detection to navigate
+5. Progress broadcast to Frontend via WebSocket → Mini-map updates
+
+## Hardware Pin Map (pre-wired)
+
+All pins follow BCM numbering. Wiring matches `docs/medi-runner-guide.md` Appendix.
+
+| Component | Function | BCM GPIO | Physical Pin |
+|-----------|----------|----------|-------------|
+| L298N | ENA (left speed PWM) | 20 | 38 |
+| L298N | IN1 (left motor A) | 23 | 16 |
+| L298N | IN2 (left motor B) | 22 | 15 |
+| L298N | IN3 (right motor A) | 27 | 13 |
+| L298N | IN4 (right motor B) | 17 | 11 |
+| L298N | ENB (right speed PWM) | 16 | 36 |
+| TCRT5000 | S1 — far left | 5 | 29 |
+| TCRT5000 | S2 — left | 6 | 31 |
+| TCRT5000 | S3 — center | 13 | 33 |
+| TCRT5000 | S4 — right | 19 | 35 |
+| TCRT5000 | S5 — far right | 26 | 37 |
+| Buzzer | VCC (active, 5 V logic) | 24 | 18 |
+| Camera | CSI ribbon | — | Camera slot |
+| IR Array | 5 V power | — | Pin 4 (5 V) |
+| IR Array / Buzzer | GND | — | Pin 6 (GND) |
 
 ## Security Considerations
 

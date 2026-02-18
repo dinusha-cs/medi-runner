@@ -73,15 +73,28 @@ def take_snapshot():
 
 # --- MISSION SEQUENCE ---
 
+# IN1 -> RF
+
 try:
     print("Mission Started.")
-    move_forward(60)
-    time.sleep(1)
+    # move_forward(60)
+    # time.sleep(1)
 
-    stop(1)
+    # stop(1)
 
-    move_backward(60)
-    time.sleep(1)
+    # move_backward(60)
+    # time.sleep(1)
+
+    GPIO.output(IN1, GPIO.LOW)
+    GPIO.output(IN2, GPIO.LOW)
+    GPIO.output(IN3, GPIO.HIGH)
+    GPIO.output(IN4, GPIO.HIGH)
+    # pwm_a.ChangeDutyCycle(60)
+    # pwm_a.ChangeDutyCycle(60)
+    pwm_a.ChangeDutyCycle(60)
+    pwm_b.ChangeDutyCycle(60)
+    time.sleep(10)
+    
     
     # # 2 seconds forward
     # move_forward(60)
