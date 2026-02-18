@@ -234,7 +234,320 @@ Pick ONE strong innovation and make it reliable:
 
 ---
 
-## 3) Test Plan (By Stage + Cross-Cutting)
+## 3) Development Readiness Plan (Team Devices + SSH + Dependencies)
+
+### 3.1 Team Device Allocation (6 Members → 3 Workstations)
+
+We connect **3 development devices** to the Raspberry Pi robot, each with a dedicated role. Each device is assigned **2 team members** (primary + backup).
+
+| Device | Role | Purpose | Team Members |
+|--------|------|---------|-------------|
+| **Device 1 — Frontend & Streaming** | Frontend Developer + QA | Run the Next.js control console, verify video streaming, test teleop UI, validate camera feed and WebSocket connectivity | Member 1 (primary), Member 2 (backup) |
+| **Device 2 — Platform & Configuration** | Platform / DevOps Engineer | OS maintenance, system configuration, network setup, Pi camera & GPIO config, environment variables, log monitoring, database management | Member 3 (primary), Member 4 (backup) |
+| **Device 3 — Robot Controller Deployment** | Robot Software Engineer | Deploy and debug the Python robot-server, controller-backend (Node.js), manage systemd services, run integration tests on the Pi | Member 5 (primary), Member 6 (backup) |
+
+### 3.2 SSH Key Setup (All 3 Devices → Robot Pi)
+
+Each device must create an SSH key pair and copy the public key to the Raspberry Pi for passwordless access.
+
+> **Robot hostname:** `NeuroNex-Navi`
+> **Robot user:** `pi` (or your configured username)
+> **Robot IP:** Discover with `ping NeuroNex-Navi.local` or check router DHCP leases
+> **Wi-Fi Network:** Cleint-5F / Password: Welcome123()*
+
+#### Step 1 — Generate SSH key pair (run on each developer device)
+
+**Windows (PowerShell):**
+```powershell
+# Generate ED25519 key (recommended) — press Enter for defaults, no passphrase for dev
+ssh-keygen -t ed25519 -C "device1-frontend@medirunner"
+
+# Key files created:
+#   Private: C:\Users\<you>\.ssh\id_ed25519
+#   Public:  C:\Users\<you>\.ssh\id_ed25519.pub
+```
+
+**Linux / macOS:**
+```bash
+# Generate ED25519 key
+ssh-keygen -t ed25519 -C "device1-frontend@medirunner"
+
+# Key files created:
+#   Private: ~/.ssh/id_ed25519
+#   Public:  ~/.ssh/id_ed25519.pub
+```
+
+> **Tip:** Use a descriptive comment per device role:
+> - Device 1: `-C "device1-frontend@medirunner"`
+> - Device 2: `-C "device2-platform@medirunner"`
+> - Device 3: `-C "device3-deployment@medirunner"`
+
+#### Step 2 — Copy public key to the Robot Pi
+
+**Linux / macOS (ssh-copy-id):**
+```bash
+# Replace <PI_IP> with the robot's IP address (e.g., 192.168.1.100)
+ssh-copy-id -i ~/.ssh/id_ed25519.pub pi@<PI_IP>
+
+# When prompted, enter the Pi's password (default: raspberry or your custom password)
+# After this, passwordless SSH will work
+```
+
+**Windows (PowerShell — no ssh-copy-id available natively):**
+```powershell
+# Option A: manual copy
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh pi@<PI_IP> "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh"
+
+# Option B: if Git Bash is installed, use ssh-copy-id from Git Bash
+ssh-copy-id -i ~/.ssh/id_ed25519.pub pi@<PI_IP>
+```
+
+#### Step 3 — Verify passwordless SSH
+
+```bash
+# From each device — should connect without a password prompt
+ssh pi@<PI_IP>
+
+# Verify hostname
+hostname   # Should print: NeuroNex-Navi
+```
+
+#### Step 4 — (Optional) Configure SSH alias for convenience
+
+Add to `~/.ssh/config` (Linux/macOS) or `C:\Users\<you>\.ssh\config` (Windows):
+
+```
+Host robot
+    HostName <PI_IP>
+    User pi
+    IdentityFile ~/.ssh/id_ed25519
+    StrictHostKeyChecking no
+```
+
+Now all team members can simply run:
+```bash
+ssh robot
+```
+
+### 3.3 Raspberry Pi OS Update & Base Configuration
+
+Run these commands on the Pi (via SSH from **Device 2 — Platform**):
+
+```bash
+# ── 1. Update OS packages ──
+sudo apt update && sudo apt full-upgrade -y
+
+# ── 2. Set hostname ──
+sudo hostnamectl set-hostname NeuroNex-Navi
+echo "127.0.1.1  NeuroNex-Navi" | sudo tee -a /etc/hosts
+
+# ── 3. Enable required interfaces ──
+sudo raspi-config nonint do_ssh 0          # Enable SSH
+sudo raspi-config nonint do_camera 0       # Enable Camera (Legacy)
+sudo raspi-config nonint do_i2c 0          # Enable I2C (if needed)
+
+# ── 4. Configure Wi-Fi (if not already connected) ──
+sudo nmcli dev wifi connect "Cleint-5F" password "Welcome123()*"
+
+# ── 5. Set timezone and locale ──
+sudo timedatectl set-timezone Asia/Colombo
+sudo localctl set-locale LANG=en_US.UTF-8
+
+# ── 6. Reboot to apply changes ──
+sudo reboot
+```
+
+### 3.4 Install Dependencies on Raspberry Pi
+
+Run from **Device 2 (Platform)** or **Device 3 (Deployment)** via SSH:
+
+#### Python environment (Robot Server)
+```bash
+# ── Install Python 3.11+ and pip ──
+sudo apt install -y python3 python3-pip python3-venv python3-dev
+
+# ── Install system-level libraries for OpenCV and GPIO ──
+sudo apt install -y \
+  libopencv-dev \
+  python3-opencv \
+  libatlas-base-dev \
+  libjasper-dev \
+  libqtgui4 \
+  libqt4-test \
+  libhdf5-dev \
+  libhdf5-serial-dev \
+  libharfbuzz0b \
+  libwebp-dev \
+  libtiff5-dev \
+  libilmbase-dev \
+  libopenexr-dev \
+  libgstreamer1.0-dev \
+  libavcodec-dev \
+  libavformat-dev \
+  libswscale-dev
+
+# ── Create a virtual environment for the robot server ──
+cd /opt/medirunner/robot
+python3 -m venv venv
+source venv/bin/activate
+
+# ── Install Python dependencies from requirements.txt ──
+pip install --upgrade pip
+pip install -r requirements.txt
+# requirements.txt includes:
+#   asyncio-mqtt, opencv-python, RPi.GPIO, websockets, numpy, Pillow,
+#   scikit-image, imutils, requests, aiohttp, pytest, psutil,
+#   python-dotenv, scipy
+```
+
+#### Node.js environment (Controller Backend)
+```bash
+# ── Install Node.js 18 LTS via NodeSource ──
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Verify installation
+node --version    # Should be v18.x.x
+npm --version     # Should be 9.x.x or 10.x.x
+
+# ── Install controller-backend dependencies ──
+cd /opt/medirunner/controller-backend
+npm install
+# Installs: express, ws, better-sqlite3, dotenv, cors, helmet,
+#           joi, jsonwebtoken, bcryptjs, morgan, multer, etc.
+
+# ── Initialize the database ──
+npm run db:init
+```
+
+#### Next.js Frontend (Controller Frontend)
+```bash
+# ── Install controller-frontend dependencies ──
+cd /opt/medirunner/controller-frontend
+npm install
+# Installs: next, react, react-dom, socket.io-client, typescript, etc.
+
+# ── Build for production (demo mode) ──
+npm run build
+```
+
+#### Additional system tools
+```bash
+# ── Install useful utilities ──
+sudo apt install -y \
+  git \
+  htop \
+  tmux \
+  vim \
+  curl \
+  wget \
+  jq \
+  screen \
+  rsync
+
+# ── Install GPIO tools ──
+sudo apt install -y \
+  python3-rpi.gpio \
+  python3-gpiozero \
+  pigpio \
+  python3-pigpio
+
+# ── Start pigpio daemon (needed for hardware PWM) ──
+sudo systemctl enable pigpiod
+sudo systemctl start pigpiod
+```
+
+### 3.5 Environment Configuration Files
+
+#### Robot Server `.env` (on Pi at `/opt/medirunner/robot/.env`)
+```env
+# Robot Configuration
+ROBOT_HOST=0.0.0.0
+ROBOT_API_PORT=8000
+ROBOT_STREAM_PORT=8080
+ROBOT_MODE=AUTO
+WATCHDOG_TIMEOUT_MS=2000
+
+# Motor GPIO Pins
+MOTOR_IN1=17
+MOTOR_IN2=27
+MOTOR_IN3=22
+MOTOR_IN4=23
+
+# IR Sensors
+IR_SENSOR_1=5
+IR_SENSOR_2=6
+IR_SENSOR_3=13
+IR_SENSOR_4=19
+IR_SENSOR_5=26
+
+# Bump & Proximity
+BUMP_SENSOR=18
+PROXIMITY_SENSOR=24
+
+# PID Defaults
+PID_KP=1.0
+PID_KI=0.0
+PID_KD=0.5
+```
+
+#### Controller Backend `.env` (on Pi at `/opt/medirunner/controller-backend/.env`)
+```env
+# Server
+PORT=3001
+NODE_ENV=production
+
+# Database
+DB_PATH=./data/medirunner.db
+
+# JWT Auth
+JWT_SECRET=<generate-a-random-secret>
+JWT_EXPIRES_IN=24h
+
+# Robot Connection
+ROBOT_API_URL=http://localhost:8000
+ROBOT_STREAM_URL=http://localhost:8080
+
+# OpenAI API (for sign recognition — Stage 3)
+OPENAI_API_KEY=<your-openai-api-key>
+OPENAI_MODEL=gpt-4o
+SIGN_CONFIDENCE_THRESHOLD=0.7
+```
+
+### 3.6 Per-Device Workflow After Setup
+
+| Device | After SSH + deps are ready, the team member should... |
+|--------|------------------------------------------------------|
+| **Device 1 — Frontend** | `ssh robot`, then `cd /opt/medirunner/controller-frontend && npm run dev` — open browser at `http://<PI_IP>:3000`, verify video stream, test teleop controls, confirm WebSocket connection |
+| **Device 2 — Platform** | `ssh robot`, monitor system with `htop`, check `journalctl -u robot-api -f` for logs, manage `raspi-config`, update `.env` files, run `sudo systemctl restart robot-api` after config changes |
+| **Device 3 — Deployment** | `ssh robot`, deploy code with `rsync` or `git pull`, run `cd /opt/medirunner/robot && source venv/bin/activate && python main.py`, verify motor + sensor responses, run `pytest` for integration tests |
+
+### 3.7 Quick Verification Checklist (Day 1)
+
+Run from each device after setup to confirm everything works:
+
+```bash
+# From Device 1 (Frontend)
+ssh robot "curl -s http://localhost:3001/api/health"       # Backend alive?
+ssh robot "curl -s http://localhost:3000"                    # Frontend alive?
+
+# From Device 2 (Platform)
+ssh robot "cat /proc/cpuinfo | grep Model"                  # Pi model
+ssh robot "vcgencmd measure_temp"                            # Temperature
+ssh robot "df -h /"                                          # Disk space
+ssh robot "free -m"                                          # Memory
+ssh robot "python3 -c 'import RPi.GPIO; print(\"GPIO OK\")'" # GPIO module
+
+# From Device 3 (Deployment)
+ssh robot "cd /opt/medirunner/robot && source venv/bin/activate && python -c 'import cv2; print(cv2.__version__)'"   # OpenCV
+ssh robot "cd /opt/medirunner/robot && source venv/bin/activate && python -c 'import websockets; print(\"WS OK\")'" # WebSockets
+ssh robot "node --version"                                   # Node.js
+ssh robot "cd /opt/medirunner/controller-backend && npm test" # Backend tests
+```
+
+---
+
+## 4) Test Plan (By Stage + Cross-Cutting)
 
 ### General Test Principles
 - Test the **full pipeline early**: UI -> API -> motors
@@ -319,7 +632,7 @@ Pick ONE strong innovation and make it reliable:
 
 ---
 
-## 4) Integration Checklist (Always-On)
+## 5) Integration Checklist (Always-On)
 - ✅ Pinout finalized and documented
 - ✅ One API contract everyone follows (command + telemetry)
 - ✅ Logging: timestamps, mode changes, sensor summary, error codes
@@ -333,7 +646,7 @@ Pick ONE strong innovation and make it reliable:
 
 ---
 
-## 5) Risk Register (Common Pitfalls + Mitigations)
+## 6) Risk Register (Common Pitfalls + Mitigations)
 - **Power instability / brownouts** → check buck converter, separate motor power if possible, reduce peak PWM
 - **Motor noise resets Pi** → ensure grounds, add capacitance if available, reduce sudden acceleration
 - **IR sensors inconsistent** → calibrate thresholds, add filtering, test surface contrast
@@ -346,7 +659,7 @@ Pick ONE strong innovation and make it reliable:
 
 ---
 
-## 6) Definition of Done (Competition-Ready)
+## 7) Definition of Done (Competition-Ready)
 - Robot is controllable at all times, with safe STOP
 - Stage 2 autonomy is stable and repeatable
 - Stage 3 intelligence is demonstrable: robot captures sign images, sends to OpenAI Vision, receives and executes correct actions, with full audit trail in database

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Medi Runner Challenge 2025 🚀
 
 ## Project Overview
@@ -222,6 +221,3 @@ medi-runner/
 ---
 
 **🏆 Ready to build the future of medical robotics? Let's make it happen!**
-=======
-initial commit
->>>>>>> 50c1c59d56f03a32fabb976e9d07910eac598c3f
