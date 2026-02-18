@@ -31,10 +31,10 @@ def move_forward(speed):
 
 def move_backward(speed):
     """Both motors spin backward"""
-    GPIO.output(IN1, GPIO.LOW)
+    GPIO.output(IN1, GPIO.HIGH)
     GPIO.output(IN2, GPIO.LOW)
     GPIO.output(IN3, GPIO.HIGH)
-    GPIO.output(IN4, GPIO.HIGH)
+    GPIO.output(IN4, GPIO.LOW)
     pwm_a.ChangeDutyCycle(speed)
     pwm_b.ChangeDutyCycle(speed)
 
