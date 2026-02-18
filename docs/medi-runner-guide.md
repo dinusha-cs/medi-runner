@@ -12,7 +12,7 @@ to an intelligent medical supply runner that understands signs, zones, and missi
 Each stage contains two parallel tracks: 
 •          Robotics Track – physical build, sensors, motors, camera, handle autonomous 
 operations (Pilot and sub-team are responsible for handling this track). 
-•        Software Track – Next.js control system, AI, streaming, mission UI, handle 
+•        Software Track – Control system, AI, streaming, mission UI, handle 
 manual operations (Co-pilot and sub-team are responsible for handling this track). 
 Team members must handle both tracks simultaneously. 
  
@@ -105,7 +105,7 @@ As the robot begins its first movements, a control panel and a dashboard that ho
 will rely on also should be built. This app will become the window into the robot’s status, 
 movements, tasks etc. 
 1. Building the entrance phase of the application  
-• A Next.Js application should be created aiming to have a control panel and a 
+• A web application should be created aiming to have a control panel and a 
 dashboard for the robot so that hospital staff can see what’s going on with robot and 
 to control it whenever needed. ( In current stage, there is no need to implement those 
 actuals) 

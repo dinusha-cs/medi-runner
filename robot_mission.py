@@ -8,6 +8,8 @@ IN1, IN2, ENB = 23, 22, 16
 # Left Motor (Motor A)
 IN3, IN4, ENA = 27, 17, 20
 
+IS = 60
+
 # GPIO Setup
 GPIO.setmode(GPIO.BCM)
 GPIO.setup([IN1, IN2, IN3, IN4, ENA, ENB], GPIO.OUT)
@@ -19,24 +21,29 @@ pwm_a.start(0)
 pwm_b.start(0)
 
 # --- MOVEMENT FUNCTIONS ---
-
-def move_forward(speed):
-    """Both motors spin forward"""
+def pinf():
     GPIO.output(IN1, GPIO.LOW)
     GPIO.output(IN2, GPIO.HIGH)
     GPIO.output(IN3, GPIO.HIGH)
     GPIO.output(IN4, GPIO.LOW)
+
+def pinb():
+    GPIO.output(IN1, GPIO.HIGH)
+    GPIO.output(IN2, GPIO.LOW)
+    GPIO.output(IN3, GPIO.LOW)
+    GPIO.output(IN4, GPIO.HIGH)
+
+def move_forward(speed):
+    """Both motors spin forward"""
+    pinf()
     pwm_a.ChangeDutyCycle(speed)
     pwm_b.ChangeDutyCycle(speed)
 
 def move_backward(speed):
     """Both motors spin backward"""
-    GPIO.output(IN1, GPIO.HIGH)
-    GPIO.output(IN2, GPIO.LOW)
-    GPIO.output(IN3, GPIO.LOW)
-    GPIO.output(IN4, GPIO.HIGH)
+    pinb()
     pwm_a.ChangeDutyCycle(speed)
-    pwm_b.ChangeDutyCycle(speed)
+    pwm_b.ChangeDutyCycle(speed*1.04)
 
 def turn_left(speed):
     """Pivot right (Left wheel moves, Right wheel stops)"""
@@ -71,16 +78,20 @@ def take_snapshot():
     subprocess.run(["rpicam-still", "-o", "mission_capture.jpg", "--timeout", "1000"])
     print("Snapshot saved.")
 
+
+
 # --- MISSION SEQUENCE ---
 
 try:
     print("Mission Started.")
     
     # 2 seconds forward
-    move_forward(60)
-    time.sleep(1)
+    pinf()
+    pwm_a.ChangeDutyCycle(70)
+    pwm_b.ChangeDutyCycle(60)
+    time.sleep(2) 
     
-    # Stop for 1 second
+    # # Stop for 1 second
     stop(1)
     
     # # Turn right for 2 seconds
@@ -89,7 +100,9 @@ try:
 
     stop(1)
 
-    move_forward(60)
+    pinf()
+    pwm_a.ChangeDutyCycle(60)
+    pwm_b.ChangeDutyCycle(40)
     time.sleep(2)
 
     stop(1)
@@ -99,7 +112,9 @@ try:
 
     stop(1)
 
-    move_forward(60)
+    pinf()
+    pwm_a.ChangeDutyCycle(50)
+    pwm_b.ChangeDutyCycle(60)
     time.sleep(2)
 
     stop(1)
@@ -107,7 +122,9 @@ try:
     #SS
     take_snapshot()
 
-    move_backward(60)
+    pinb()
+    pwm_a.ChangeDutyCycle(60)
+    pwm_b.ChangeDutyCycle(50)
     time.sleep(2)
 
     stop()

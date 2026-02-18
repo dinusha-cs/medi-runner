@@ -20,6 +20,13 @@ Endpoints:
     POST /api/robot/stop      - Stop movement
     GET  /api/robot/status    - Get robot status
     POST /api/robot/buzzer    - Activate buzzer
+    GET  /api/robot/voltage   - Get Raspberry Pi input voltage
+    POST /api/robot/camera/panoramic - Capture 360° panoramic photo
+    POST /api/robot/mission   - Start autonomous mission to target
+    GET  /api/robot/mission   - Get current mission status
+    POST /api/robot/mission/cancel - Cancel current mission
+    GET  /api/robot/track/map - Get track map data
+    POST /api/robot/track/node - Add/update a track node
 """
 
 import asyncio
@@ -320,6 +327,57 @@ async def get_ir_sensors():
 
 
 # ---------------------------------------------------------------------------
+# Voltage endpoint – Raspberry Pi supply voltage
+# ---------------------------------------------------------------------------
+@app.get("/api/robot/voltage", response_model=RobotResponse)
+async def get_voltage():
+    """
+    Read current Raspberry Pi input voltage.
+
+    Uses ``vcgencmd measure_volts core`` and ``/sys/class/thermal/thermal_zone0/temp``
+    to report supply voltage and CPU temperature.
+    """
+    import subprocess
+
+    voltage = None
+    cpu_temp = None
+    throttled = None
+
+    if SIMULATION_MODE:
+        voltage = 5.1
+        cpu_temp = 42.0
+        throttled = "0x0"
+    else:
+        try:
+            raw = subprocess.check_output(
+                ["vcgencmd", "measure_volts", "core"], timeout=2
+            ).decode().strip()                             # e.g. "volt=1.3500V"
+            voltage = float(raw.split("=")[1].rstrip("V"))
+        except Exception as exc:
+            logger.warning(f"vcgencmd voltage read failed: {exc}")
+
+        try:
+            raw = Path("/sys/class/thermal/thermal_zone0/temp").read_text().strip()
+            cpu_temp = int(raw) / 1000.0                   # millidegrees → °C
+        except Exception as exc:
+            logger.warning(f"CPU temp read failed: {exc}")
+
+        try:
+            raw = subprocess.check_output(
+                ["vcgencmd", "get_throttled"], timeout=2
+            ).decode().strip()                             # e.g. "throttled=0x0"
+            throttled = raw.split("=")[1]
+        except Exception:
+            pass
+
+    return _response(True, "voltage", "Raspberry Pi voltage info", {
+        "core_voltage_v": voltage,
+        "cpu_temp_c": cpu_temp,
+        "throttled": throttled,
+    })
+
+
+# ---------------------------------------------------------------------------
 # Mode endpoint (manual / autonomous)
 # ---------------------------------------------------------------------------
 @app.get("/api/robot/mode", response_model=RobotResponse)
@@ -515,6 +573,59 @@ async def camera_snapshot():
         raise HTTPException(status_code=503, detail="Camera not available")
     frame = cam.capture_frame()
     return Response(content=frame, media_type="image/jpeg")
+
+
+# ---------------------------------------------------------------------------
+# 360° Panoramic photo capture
+# ---------------------------------------------------------------------------
+class PanoramicRequest(BaseModel):
+    """Parameters for 360° panoramic capture."""
+    steps: int = 12           # number of snapshots (360/steps = degrees per step)
+    turn_speed: int = 40      # motor speed while turning
+    turn_duration: float = 0.3  # seconds to turn between shots
+    settle_delay: float = 0.2   # seconds to wait after turn before capture
+
+
+@app.post("/api/robot/camera/panoramic", response_model=RobotResponse)
+async def camera_panoramic(req: PanoramicRequest = PanoramicRequest()):
+    """
+    Capture a 360° panoramic set of images.
+
+    The robot rotates in place, capturing a snapshot at each step.
+    Returns a list of base64-encoded JPEG images that the frontend can
+    stitch into a panorama.
+
+    **Process:** turn right → pause → capture → repeat ``steps`` times.
+    """
+    import base64
+
+    cam = _init_camera()
+    if cam is None:
+        raise HTTPException(status_code=503, detail="Camera not available")
+
+    m = _get_motor()
+    frames: list[dict] = []
+    degrees_per_step = 360.0 / req.steps
+
+    for i in range(req.steps):
+        # Turn the robot one step
+        if i > 0:
+            await m.move("right", req.turn_speed, req.turn_duration)
+            await asyncio.sleep(req.settle_delay)
+
+        # Capture snapshot
+        jpeg = cam.capture_frame()
+        frames.append({
+            "index": i,
+            "angle_deg": round(i * degrees_per_step, 1),
+            "jpeg_b64": base64.b64encode(jpeg).decode(),
+        })
+
+    return _response(True, "panoramic", f"Captured {req.steps} frames for 360° panorama", {
+        "steps": req.steps,
+        "degrees_per_step": degrees_per_step,
+        "frames": frames,
+    })
 
 
 # ---------------------------------------------------------------------------

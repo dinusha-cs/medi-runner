@@ -1,223 +1,147 @@
-# Medi Runner Challenge 2025 🚀
+# Medi Runner Challenge 2025
 
 ## Project Overview
 
-The Medi Runner Challenge is a comprehensive robotics and software development competition where teams build an autonomous medical delivery robot capable of navigating hospital corridors, interpreting signs, and functioning as a smart medical assistant.
-
-## Challenge Structure
-
-The competition consists of 4 progressive stages:
-
-### Stage 1: Robot Birth & Foundation
-- **Robotics Track**: Hardware assembly, component integration, basic motor control
-- **Software Track**: User authentication, team enrollment, control console setup
-- **Outcome**: Functional robot with operational control interface
-
-### Stage 2: Navigation & Control
-- **Robotics Track**: Line following, stable turning, sensor integration
-- **Software Track**: Next.js control console, tele-driving vs autonomous mode switching
-- **Outcome**: Robot capable of corridor navigation with remote/auto control
-
-### Stage 3: Intelligence & Recognition
-- **Robotics Track**: Advanced sensor integration, hospital zone recognition
-- **Software Track**: Sign interpretation, AI-powered decision making, real-time streaming
-- **Outcome**: Smart robot that understands hospital environments
-
-### Stage 4: Innovation Challenge
-- **Open Track**: Creative extensions, medical domain improvements, advanced features
-- **Outcome**: Production-ready medical delivery system concept
+The Medi Runner Challenge is a robotics and software development competition where teams build an autonomous medical delivery robot capable of navigating hospital corridors, interpreting signs, and functioning as a smart medical assistant.
 
 ## System Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Robot Server   │◄──►│ Controller API  │◄──►│ Frontend UI     │
-│ (Raspberry Pi)  │    │ (Backend)       │    │ (Next.js)       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Hardware      │    │   WebSocket/    │    │   Real-time     │
-│   Components    │    │   HTTP APIs     │    │   Dashboard     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                                              │
-         ▼                                              ▼
-┌─────────────────┐                          ┌─────────────────┐
-│   Simulation    │                          │   3D Viewer     │
-│   Tools         │                          │   (Three.js)    │
-└─────────────────┘                          └─────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                  Raspberry Pi 4 (8 GB)                         │
+│                                                                │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │         Robot Controller API  (FastAPI :8000)             │  │
+│  │                                                          │  │
+│  │  POST /forward   GET /sensors/ir   GET /mode             │  │
+│  │  POST /backward  POST /buzzer      POST /mode            │  │
+│  │  POST /left      GET /status       GET /camera/stream    │  │
+│  │  POST /right     GET /health       GET /camera/snapshot  │  │
+│  │  POST /stop                                              │  │
+│  │               ┌────────────────────┐                     │  │
+│  │               │  GPIO / Hardware   │                     │  │
+│  │               │  L298N, IR, Buzzer │                     │  │
+│  │               │  Pi Camera (CSI)   │                     │  │
+│  │               └────────────────────┘                     │  │
+│  └──────────────▲───────────────────────────────────────────┘  │
+│                 │ HTTP (localhost)                              │
+│  ┌──────────────┴───────┐                                      │
+│  │   ZeroClaw Agent     │  Autonomous line-following (PID)     │
+│  │   (Python, httpx)    │  Only active in autonomous mode      │
+│  └──────────────────────┘                                      │
+│                                                                │
+│  HTTP :8000 exposed on LAN — any client can consume the API    │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ## Project Structure
 
 ```
 medi-runner/
-├── docs/                      # Documentation and design specs
-├── robot-server/              # Raspberry Pi robot controller
-├── controller-backend/        # Node.js/Express API server
-├── controller-front-end/      # Next.js dashboard
+├── docs/                      # Documentation
+│   ├── architecture.md        # System architecture
+│   ├── api-reference.md       # Full API reference
+│   ├── development-guide.md   # Setup & development guide
+│   └── medi-runner-guide.md   # Competition guide
+├── robot-server/              # Python robot controller (FastAPI)
+│   ├── api_server.py          # REST API server (:8000)
+│   ├── zeroclaw_agent.py      # ZeroClaw autonomous agent
+│   ├── config.py              # GPIO pins & settings
+│   ├── requirements.txt       # Python dependencies
+│   ├── robot/                 # Motor & sensor controllers
+│   ├── services/              # Computer vision, missions
+│   ├── tests/                 # pytest test suite
+│   └── utils/                 # Logging utilities
 ├── hardware/                  # Hardware specs and diagrams
-├── tests/                     # Integration and unit tests
-└── deployment/               # Docker and deployment configs
+└── env/                       # Python virtual environment
 ```
 
 ## Technology Stack
 
 ### Hardware
-- **Brain**: Raspberry Pi 4 Model B
-- **Motors**: DC Motors with L298N Driver
-- **Sensors**: IR Line Following Array, Pi Camera v1.3
-- **Power**: Dual battery pack with LM2596 converter
-- **Audio**: 3V Active Buzzer
-- **Chassis**: Pre-assembled robot car kit
+- **Brain**: Raspberry Pi 4 Model B (8 GB)
+- **Motors**: 2× DC Motors with L298N Driver
+- **Sensors**: TCRT5000 5-channel IR Array (line following)
+- **Camera**: Pi Camera V1.3 5MP (CSI ribbon)
+- **Power**: 2× 8650 batteries with LM2596 buck converter
+- **Audio**: 5V Active Buzzer (GPIO 24)
 
 ### Software
-- **Robot Controller**: Python (asyncio, OpenCV, GPIO)
-- **Backend API**: Node.js/Express with WebSocket support
-- **Frontend**: Next.js with real-time streaming
-- **Communication**: WebSocket, HTTP REST APIs
-- **AI/ML**: Computer Vision, Sign Recognition
-- **Database**: SQLite/PostgreSQL for mission data
-- **Simulation**: Python/pygame 2D, Three.js 3D, Webots support
+- **Language**: Python 3.11+ (all components)
+- **API Framework**: FastAPI with Uvicorn
+- **Autonomous Agent**: ZeroClaw (async httpx, PID controller)
+- **Computer Vision**: OpenCV, picamera2
+- **GPIO**: RPi.GPIO
+- **Deployment**: Bare metal with systemd services
 
-## Team Roles
+## Quick Start
 
-### 🎯 Innovation Lead
-- Strategic planning and vision
-- Cross-track coordination
-- Innovation challenge leadership
-- Performance optimization
+### 1. Raspberry Pi Setup
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3-pip python3-venv python3-dev libopencv-dev
 
-### 🤖 Pilot (Robotics Track Lead)
-- Hardware assembly and integration
-- Sensor programming and calibration
-- Autonomous navigation algorithms
-- Motor control and power management
+# Enable camera and GPIO
+sudo raspi-config
+```
 
-### 💻 Co-Pilot (Software Track Lead)
-- Control console development
-- Real-time communication systems
-- AI integration and computer vision
-- User interface and experience
+### 2. Install Dependencies
+```bash
+cd robot-server
+python3 -m venv ../env
+source ../env/bin/activate
+pip install -r requirements.txt
+cp config.example.py config.py
+```
 
-### 👥 Sub-team Members
-- Specialized task execution
-- Pair programming support
-- Testing and debugging
-- Documentation and demos
+### 3. Start the API Server
+```bash
+python api_server.py
+# Runs at http://0.0.0.0:8000
+# Swagger docs at http://0.0.0.0:8000/docs
+```
 
-## Development Phases
+### 4. Start ZeroClaw Agent (autonomous mode)
+```bash
+# In a separate terminal
+python zeroclaw_agent.py
+```
 
-### Phase 1: Foundation (Stage 1)
-1. **Hardware Setup**
-   - Component assembly and wiring
-   - GPIO configuration and testing
-   - Basic motor control implementation
+### 5. Simulation Mode
+Set `SIMULATION_MODE = True` in `config.py` to develop without real hardware.
 
-2. **Software Foundation**
-   - Project structure initialization
-   - Authentication system
-   - Basic control interface
+## API Endpoints
 
-### Phase 2: Navigation (Stage 2)
-1. **Autonomous Navigation**
-   - Line following algorithm
-   - Sensor data processing
-   - Movement control logic
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/robot/forward` | Move forward |
+| POST | `/api/robot/backward` | Move backward |
+| POST | `/api/robot/left` | Turn left |
+| POST | `/api/robot/right` | Turn right |
+| POST | `/api/robot/stop` | Stop all motors |
+| GET | `/api/robot/sensors/ir` | Read IR sensor array |
+| GET | `/api/robot/status` | Get robot status |
+| GET | `/api/robot/mode` | Get current mode |
+| POST | `/api/robot/mode` | Switch mode (manual/autonomous) |
+| POST | `/api/robot/buzzer` | Activate buzzer |
+| GET | `/api/robot/camera/stream` | MJPEG video stream |
+| GET | `/api/robot/camera/snapshot` | Single JPEG frame |
+| GET | `/health` | Health check |
 
-2. **Control Systems**
-   - Real-time dashboard
-   - Manual/auto mode switching
-   - Live camera streaming
+Full API reference: [docs/api-reference.md](docs/api-reference.md)
 
-### Phase 3: Intelligence (Stage 3)
-1. **Computer Vision**
-   - Sign recognition system
-   - Hospital zone mapping
-   - Object detection and avoidance
+## Documentation
 
-2. **Smart Behaviors**
-   - Decision making algorithms
-   - Mission planning system
-   - Emergency protocols
+- [System Architecture](docs/architecture.md)
+- [API Reference](docs/api-reference.md)
+- [Development Guide](docs/development-guide.md)
+- [Hardware Specifications](hardware/specifications.md)
 
-### Phase 4: Innovation (Stage 4)
-1. **Creative Extensions**
-   - Advanced AI features
-   - Medical domain integrations
-   - Performance optimizations
+## GPIO Pin Map (BCM)
 
-## Quick Start Guide
-
-1. **Prerequisites Setup**
-   ```bash
-   # Raspberry Pi preparation
-   sudo apt update && sudo apt upgrade
-   pip install opencv-python RPi.GPIO asyncio
-   
-   # Development environment
-   node --version  # v18+
-   npm install -g pnpm
-   ```
-
-2. **Project Installation**
-   ```bash
-   git clone <repository>
-   cd medi-runner
-   
-   # Install all dependencies
-   npm run install:all
-   ```
-
-3. **Development**
-   ```bash
-   # Start all services
-   npm run dev
-   
-   # Or start individually
-   npm run dev:robot      # Robot server
-   npm run dev:backend    # API backend
-   npm run dev:frontend   # Next.js UI
-   ```
-
-4. **Robot Simulation**
-   ```bash
-   # 2D Hospital Simulation (pygame)
-   python hospital_simulation.py
-   
-   # 3D Web Viewer (Three.js)
-   # Open robot_3d_viewer.html in browser
-   
-   # Component Testing
-   python demo_robot.py
-   
-   # WebSocket Testing
-   python test_robot_system.py
-   ```
-
-## Competition Strategy
-
-### Time Management
-- **25% Hardware Assembly & Integration**
-- **35% Core Navigation & Control**
-- **25% Intelligence & Computer Vision**
-- **15% Innovation & Polish**
-
-### Success Metrics
-- ✅ Robot responds to commands
-- ✅ Autonomous line following
-- ✅ Real-time video streaming
-- ✅ Sign recognition accuracy
-- ✅ Innovation feature completeness
-
-## Resources & References
-
-- [Raspberry Pi GPIO Documentation](https://pinout.xyz/)
-- [OpenCV Computer Vision](https://docs.opencv.org/4.x/)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [L298N Motor Driver Guide](hardware/motor-driver-guide.md)
-- [Competition Rules & Scoring](docs/competition-rules.md)
-
----
-
-**🏆 Ready to build the future of medical robotics? Let's make it happen!**
+| Component | Pins |
+|-----------|------|
+| L298N Motor Driver | ENA=20, IN1=23, IN2=22, IN3=27, IN4=17, ENB=16 |
+| TCRT5000 IR Array | S1=5, S2=6, S3=13, S4=19, S5=26 |
+| Buzzer | GPIO 24 |
+| Camera | CSI ribbon |

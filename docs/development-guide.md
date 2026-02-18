@@ -4,594 +4,390 @@
 
 ### Prerequisites
 
-**Development Environment:**
-- Node.js v18+ with npm/pnpm
-- Python 3.9+ with pip
-- Git for version control
-- VS Code or preferred IDE
-
-**Raspberry Pi Setup:**
+**Raspberry Pi Setup (bare metal):**
 ```bash
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install Python dependencies
-sudo apt install python3-pip python3-venv
-pip3 install opencv-python RPi.GPIO asyncio websockets
+# Install Python and system dependencies
+sudo apt install -y python3-pip python3-venv python3-dev libopencv-dev
 
 # Enable camera and GPIO
 sudo raspi-config
 # Navigate to: Interface Options → Camera → Enable
 # Navigate to: Interface Options → GPIO → Enable
+
+# Reboot after enabling
+sudo reboot
 ```
 
-**Development Machine:**
-```bash
-# Install Node.js (use nvm recommended)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-nvm install 18
-nvm use 18
-
-# Install pnpm
-npm install -g pnpm
-
-# Clone project
-git clone <repository-url>
-cd medi-runner
-```
+**Development Machine (optional — for remote editing):**
+- VS Code with Remote-SSH extension
+- Python 3.9+ (for linting / local tests with SIMULATION_MODE)
 
 ### Project Setup
 
-1. **Install Dependencies**
+1. **Clone and install dependencies**
 ```bash
-# Root package.json for scripts
-npm install
+git clone <repository-url>
+cd medi-runner/robot-server
 
-# Install all project dependencies
-npm run install:all
+# Create virtual environment (recommended)
+python3 -m venv ../env
+source ../env/bin/activate
 
-# Or install individually
-cd robot-server && pip3 install -r requirements.txt
-cd ../controller-backend && pnpm install
-cd ../controller-front-end && pnpm install
+# Install Python dependencies
+pip install -r requirements.txt
 ```
 
-2. **Environment Configuration**
+2. **Configure the robot**
 ```bash
-# Copy environment templates
-cp controller-backend/.env.example controller-backend/.env
-cp controller-front-end/.env.local.example controller-front-end/.env.local
-
-# Configure robot server
-cp robot-server/config.example.py robot-server/config.py
+# Copy and edit config
+cp config.example.py config.py
+nano config.py
 ```
 
-3. **Database Setup**
-```bash
-# Initialize database (SQLite for development)
-cd controller-backend
-npm run db:init
-npm run db:migrate
+Key settings in `config.py`:
+```python
+# Set True when developing without real hardware
+SIMULATION_MODE = False
+
+# GPIO pins (BCM numbering) — match your wiring
+MOTOR_ENA = 20
+MOTOR_IN1 = 23
+MOTOR_IN2 = 22
+MOTOR_IN3 = 27
+MOTOR_IN4 = 17
+MOTOR_ENB = 16
+
+IR_SENSOR_PINS = [5, 6, 13, 19, 26]
+BUZZER_PIN = 24
+
+# Camera
+CAMERA_RESOLUTION = (640, 480)
+CAMERA_FPS = 30
+CAMERA_ROTATION = 0
 ```
 
 ## Development Workflow
 
-### Starting Development Servers
+### Starting the API Server
 
-**Option 1: All services together**
 ```bash
-npm run dev
+cd robot-server
+source ../env/bin/activate
+
+# Start the Robot Controller API (FastAPI on :8000)
+python api_server.py
+
+# Server runs at http://0.0.0.0:8000
+# Swagger UI at http://0.0.0.0:8000/docs
+# ReDoc at http://0.0.0.0:8000/redoc
 ```
 
-**Option 2: Individual services**
+### Starting the ZeroClaw Agent
+
+In a separate terminal (while the API server is running):
+
 ```bash
-# Terminal 1: Robot server (on Raspberry Pi)
 cd robot-server
-python3 main.py
+source ../env/bin/activate
 
-# Terminal 2: Backend API
-cd controller-backend
-npm run dev
+# Default settings
+python zeroclaw_agent.py
 
-# Terminal 3: Frontend
-cd controller-front-end
-npm run dev
+# Custom API URL (e.g. if running remotely)
+python zeroclaw_agent.py --url http://192.168.1.100:8000
+
+# With PID tuning
+python zeroclaw_agent.py --kp 1.2 --ki 0.01 --kd 0.3 --speed 55
 ```
 
 ### Development URLs
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
-- Robot Server: ws://raspberrypi.local:8765
+- Robot Controller API: `http://<pi-ip>:8000`
+- Swagger Docs: `http://<pi-ip>:8000/docs`
+- MJPEG Camera Stream: `http://<pi-ip>:8000/api/robot/camera/stream`
 
-## Project Structure Deep Dive
+### Simulation Mode
 
-### Robot Server (Python)
+Set `SIMULATION_MODE = True` in `config.py` to develop without real hardware:
+- IR sensors return random patterns
+- Motor commands are logged but not executed
+- Camera returns generated dummy frames
+
+## Project Structure
+
+```
+robot-server/
+├── api_server.py              # FastAPI REST API — main entry point
+├── zeroclaw_agent.py          # ZeroClaw autonomous agent (PID line-following)
+├── config.py                  # All settings: GPIO pins, motor, camera, CV
+├── config.example.py          # Template config
+├── requirements.txt           # Python dependencies
+├── robot/
+│   ├── motor_controller.py    # L298N motor driver (GPIO PWM)
+│   ├── sensor_controller.py   # IR sensor abstraction
+│   └── navigation_controller.py
+├── controllers/               # Extended controllers
+├── services/
+│   ├── computer_vision.py     # Camera / sign detection
+│   └── mission_executor.py    # Mission planning
+├── tests/
+│   ├── test_api.py            # API + motor tests
+│   └── test_zeroclaw.py       # ZeroClaw agent tests
+└── utils/
+    └── logger.py              # Logging utility
+```
+
+### Key Classes
 
 ```python
-# robot-server/main.py
-import asyncio
-from controllers import MotorController, SensorController
-from services import WebSocketClient, ComputerVision
+# api_server.py — FastAPI application
+# Endpoints: /api/robot/forward, /backward, /left, /right, /stop
+#            /api/robot/sensors/ir, /api/robot/status
+#            /api/robot/mode (GET/POST), /api/robot/buzzer
+#            /api/robot/camera/stream, /api/robot/camera/snapshot
+#            /health
 
-class RobotServer:
-    def __init__(self):
-        self.motor = MotorController()
-        self.sensors = SensorController()
-        self.vision = ComputerVision()
-        self.websocket = WebSocketClient()
-    
-    async def start(self):
-        """Start robot server with all subsystems"""
-        await asyncio.gather(
-            self.motor.start(),
-            self.sensors.start(),
-            self.vision.start(),
-            self.websocket.connect()
-        )
-
-if __name__ == "__main__":
-    robot = RobotServer()
-    asyncio.run(robot.start())
+# zeroclaw_agent.py — Autonomous controller
+class AgentConfig:    # Dataclass: api_url, speeds, PID gains, timings
+class PID:            # Minimal PID controller (Kp, Ki, Kd)
+class ZeroClawAgent:  # Main agent
+    # run()           → entry point: set autonomous, start loop
+    # _control_step() → read IR → PID → move command
+    # compute_line_error() → 5-sensor weighted average → error [-2, +2]
+    # read_ir()       → GET /api/robot/sensors/ir
+    # shutdown()      → stop motors, restore manual mode
 ```
 
-**Key Classes:**
+## Testing
+
+### Running Tests
+
+```bash
+cd robot-server
+source ../env/bin/activate
+
+# Run all tests
+pytest tests/ -v
+
+# Run specific test file
+pytest tests/test_api.py -v
+pytest tests/test_zeroclaw.py -v
+
+# Run with coverage
+pytest tests/ --cov=. --cov-report=term-missing
+```
+
+### Writing Tests
 
 ```python
-# controllers/motor_controller.py
-class MotorController:
-    def __init__(self):
-        # GPIO pin setup for L298N
-        self.pins = {
-            'in1': 17, 'in2': 27, 'in3': 22, 'in4': 23,
-            'ena': 24, 'enb': 25
-        }
-    
-    def move_forward(self, speed=50):
-        """Move robot forward with specified speed (0-100)"""
-        pass
-    
-    def turn_left(self, angle=90):
-        """Turn robot left by specified angle"""
-        pass
-    
-    def follow_line(self, sensor_data):
-        """Line following algorithm"""
-        pass
-
-# controllers/sensor_controller.py
-class SensorController:
-    def __init__(self):
-        self.ir_pins = [6, 12, 13, 19, 16]
-        self.camera = None
-    
-    def read_ir_sensors(self):
-        """Read IR sensor array, return [0,1,0,1,1] format"""
-        return [GPIO.input(pin) for pin in self.ir_pins]
-    
-    def capture_image(self):
-        """Capture image from Pi camera"""
-        pass
-
-# services/computer_vision.py
-class ComputerVision:
-    def __init__(self):
-        self.camera = cv2.VideoCapture(0)
-    
-    def detect_signs(self, image):
-        """Detect and interpret hospital signs"""
-        pass
-    
-    def detect_obstacles(self, image):
-        """Detect obstacles in path"""
-        pass
-```
-
-### Controller Backend (Node.js)
-
-```javascript
-// controller-backend/src/app.js
-const express = require('express');
-const WebSocket = require('ws');
-const cors = require('cors');
-
-const app = express();
-const server = require('http').createServer(app);
-const wss = new WebSocket.Server({ server });
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/robot', require('./routes/robot'));
-app.use('/api/missions', require('./routes/missions'));
-
-// WebSocket connection handling
-wss.on('connection', (ws) => {
-    console.log('Client connected');
-    
-    ws.on('message', async (message) => {
-        const data = JSON.parse(message);
-        await handleRobotCommand(data);
-    });
-});
-
-server.listen(3001, () => {
-    console.log('Server running on port 3001');
-});
-```
-
-**Key Services:**
-
-```javascript
-// services/robotCommService.js
-class RobotCommunicationService {
-    constructor() {
-        this.robotWs = null;
-        this.clientWs = new Set();
-    }
-    
-    connectToRobot(robotUrl) {
-        this.robotWs = new WebSocket(robotUrl);
-        this.robotWs.on('message', this.handleRobotMessage.bind(this));
-    }
-    
-    sendCommand(command) {
-        if (this.robotWs?.readyState === WebSocket.OPEN) {
-            this.robotWs.send(JSON.stringify(command));
-        }
-    }
-    
-    handleRobotMessage(message) {
-        // Broadcast robot status to all clients
-        this.clientWs.forEach(ws => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(message);
-            }
-        });
-    }
-}
-
-// services/missionService.js
-class MissionService {
-    async createMission(missionData) {
-        // Validate mission parameters
-        // Save to database
-        // Send to robot for execution
-    }
-    
-    async getMissionStatus(missionId) {
-        // Query mission progress
-        // Return current status
-    }
-    
-    async cancelMission(missionId) {
-        // Stop mission execution
-        // Update database
-        // Notify robot
-    }
-}
-```
-
-### Controller Frontend (Next.js)
-
-```jsx
-// controller-front-end/pages/control.js
-import { useState, useEffect } from 'react';
-import WebSocketService from '../services/websocket';
-import RobotControl from '../components/RobotControl';
-import CameraFeed from '../components/CameraFeed';
-import StatusDisplay from '../components/StatusDisplay';
-
-export default function ControlPage() {
-    const [robotStatus, setRobotStatus] = useState({});
-    const [wsService] = useState(() => new WebSocketService());
-    
-    useEffect(() => {
-        wsService.connect();
-        wsService.onMessage = (data) => {
-            if (data.type === 'status') {
-                setRobotStatus(data.data);
-            }
-        };
-        
-        return () => wsService.disconnect();
-    }, []);
-    
-    const sendCommand = (command) => {
-        wsService.send({
-            type: 'command',
-            ...command,
-            timestamp: Date.now()
-        });
-    };
-    
-    return (
-        <div className="grid grid-cols-2 gap-4 p-4">
-            <div>
-                <RobotControl onCommand={sendCommand} />
-                <StatusDisplay status={robotStatus} />
-            </div>
-            <div>
-                <CameraFeed robotStatus={robotStatus} />
-            </div>
-        </div>
-    );
-}
-```
-
-**Key Components:**
-
-```jsx
-// components/RobotControl/ManualControl.jsx
-import { useState } from 'react';
-
-export default function ManualControl({ onCommand }) {
-    const [mode, setMode] = useState('manual'); // 'manual' | 'autonomous'
-    const [speed, setSpeed] = useState(50);
-    
-    const handleMovement = (direction) => {
-        onCommand({
-            action: 'move',
-            data: { direction, speed }
-        });
-    };
-    
-    const toggleMode = () => {
-        const newMode = mode === 'manual' ? 'autonomous' : 'manual';
-        setMode(newMode);
-        onCommand({
-            action: 'set_mode',
-            data: { mode: newMode }
-        });
-    };
-    
-    return (
-        <div className="p-4 border rounded">
-            <div className="mb-4">
-                <button
-                    onClick={toggleMode}
-                    className={`px-4 py-2 rounded ${
-                        mode === 'autonomous' ? 'bg-green-500' : 'bg-blue-500'
-                    } text-white`}
-                >
-                    {mode.toUpperCase()} MODE
-                </button>
-            </div>
-            
-            {mode === 'manual' && (
-                <div className="grid grid-cols-3 gap-2">
-                    <div></div>
-                    <button onClick={() => handleMovement('forward')}>↑</button>
-                    <div></div>
-                    <button onClick={() => handleMovement('left')}>←</button>
-                    <button onClick={() => handleMovement('stop')}>⏹</button>
-                    <button onClick={() => handleMovement('right')}>→</button>
-                    <div></div>
-                    <button onClick={() => handleMovement('backward')}>↓</button>
-                    <div></div>
-                </div>
-            )}
-            
-            <div className="mt-4">
-                <label>Speed: {speed}%</label>
-                <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    value={speed}
-                    onChange={(e) => setSpeed(e.target.value)}
-                    className="w-full"
-                />
-            </div>
-        </div>
-    );
-}
-```
-
-## Testing Strategy
-
-### Unit Testing
-
-```python
-# tests/test_motor_controller.py
-import unittest
+# tests/test_api.py
+import pytest
 from unittest.mock import Mock, patch
-from controllers.motor_controller import MotorController
+from fastapi.testclient import TestClient
 
-class TestMotorController(unittest.TestCase):
-    def setUp(self):
-        self.motor = MotorController()
-    
-    @patch('RPi.GPIO.output')
-    def test_move_forward(self, mock_gpio):
-        self.motor.move_forward(speed=50)
-        # Assert GPIO calls
-        mock_gpio.assert_called()
-    
-    def test_line_following_algorithm(self):
-        # Test with different sensor inputs
-        result = self.motor.follow_line([0, 0, 1, 0, 0])
-        self.assertEqual(result, 'straight')
+# Import with simulation mode
+import config
+config.SIMULATION_MODE = True
+
+from api_server import app
+
+client = TestClient(app)
+
+def test_health_check():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+def test_move_forward():
+    response = client.post("/api/robot/forward", json={"speed": 50})
+    assert response.status_code == 200
+
+def test_get_ir_sensors():
+    response = client.get("/api/robot/sensors/ir")
+    assert response.status_code == 200
+    data = response.json()
+    assert "sensors" in data["data"]
+
+def test_mode_switch():
+    # Set autonomous
+    response = client.post("/api/robot/mode", json={"mode": "autonomous"})
+    assert response.status_code == 200
+
+    # Verify
+    response = client.get("/api/robot/mode")
+    assert response.json()["data"]["mode"] == "autonomous"
+
+    # Set back to manual
+    response = client.post("/api/robot/mode", json={"mode": "manual"})
+    assert response.status_code == 200
 ```
 
-```javascript
-// tests/robotCommService.test.js
-const RobotCommunicationService = require('../src/services/robotCommService');
-const WebSocket = require('ws');
+### Quick API Test with curl
 
-describe('RobotCommunicationService', () => {
-    let service;
-    
-    beforeEach(() => {
-        service = new RobotCommunicationService();
-    });
-    
-    test('should send command to robot', () => {
-        const mockWs = { send: jest.fn(), readyState: WebSocket.OPEN };
-        service.robotWs = mockWs;
-        
-        service.sendCommand({ action: 'move', direction: 'forward' });
-        
-        expect(mockWs.send).toHaveBeenCalledWith(
-            JSON.stringify({ action: 'move', direction: 'forward' })
-        );
-    });
-});
-```
+```bash
+# Health check
+curl http://localhost:8000/health
 
-### Integration Testing
+# Move forward
+curl -X POST http://localhost:8000/api/robot/forward \
+  -H "Content-Type: application/json" \
+  -d '{"speed": 50}'
 
-```javascript
-// tests/integration/robot-api.test.js
-const request = require('supertest');
-const app = require('../src/app');
+# Read IR sensors
+curl http://localhost:8000/api/robot/sensors/ir
 
-describe('Robot API Integration', () => {
-    test('POST /api/robot/command should send command', async () => {
-        const response = await request(app)
-            .post('/api/robot/command')
-            .send({
-                action: 'move',
-                direction: 'forward',
-                speed: 50
-            });
-        
-        expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('success', true);
-    });
-});
+# Switch to autonomous mode
+curl -X POST http://localhost:8000/api/robot/mode \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "autonomous"}'
+
+# Beep buzzer
+curl -X POST http://localhost:8000/api/robot/buzzer \
+  -H "Content-Type: application/json" \
+  -d '{"times": 2, "duration": 0.3}'
+
+# Camera snapshot
+curl http://localhost:8000/api/robot/camera/snapshot --output snapshot.jpg
 ```
 
 ## Debugging
 
-### Logging Configuration
+### Logging
 
 ```python
-# robot-server/utils/logger.py
+# utils/logger.py
 import logging
 
 def setup_logger(name, level=logging.INFO):
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
-    
+
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.addHandler(handler)
-    
     return logger
 ```
 
-```javascript
-// controller-backend/src/utils/logger.js
-const winston = require('winston');
+Enable debug logging:
+```bash
+# Run with debug output
+python api_server.py  # FastAPI shows request logs by default
 
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.File({ filename: 'error.log', level: 'error' }),
-        new winston.transports.File({ filename: 'combined.log' })
-    ]
-});
-
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.simple()
-    }));
-}
-
-module.exports = logger;
+# ZeroClaw verbose logging
+python zeroclaw_agent.py --kp 1.0 2>&1 | tee zeroclaw.log
 ```
 
 ### Common Issues & Solutions
 
-**Robot Server Issues:**
-- GPIO permissions: `sudo usermod -a -G gpio $USER`
-- Camera not detected: `sudo raspi-config` → Enable camera
-- WebSocket connection failed: Check firewall and network settings
+**GPIO Permission Errors:**
+```bash
+sudo usermod -a -G gpio $USER
+# Log out and back in, or:
+newgrp gpio
+```
 
-**Backend API Issues:**
-- Port already in use: `lsof -ti:3001 | xargs kill -9`
-- Database connection: Check database status and credentials
-- CORS errors: Verify CORS configuration
+**Camera Not Detected:**
+```bash
+# Check camera is enabled
+sudo raspi-config  # Interface Options → Camera → Enable
+# Verify camera
+vcgencmd get_camera
+# Should show: supported=1 detected=1
 
-**Frontend Issues:**
-- WebSocket connection: Check backend server status
-- Build errors: Clear `.next` directory and rebuild
-- Environment variables: Verify `.env.local` configuration
+# For Bookworm (libcamera):
+libcamera-hello --list-cameras
+```
 
-## Deployment
+**Port Already in Use:**
+```bash
+# Find and kill process on port 8000
+lsof -ti:8000 | xargs kill -9
+```
 
-### Production Build
+**IR Sensors Reading All-High:**
+- Verify wiring: S1-S5 → GPIO 5, 6, 13, 19, 26
+- Check sensor height (3-8mm above surface)
+- Test with `curl http://localhost:8000/api/robot/sensors/ir`
+
+## Deployment (Bare Metal)
+
+### systemd Service — API Server
+
+Create `/etc/systemd/system/medi-runner-api.service`:
+```ini
+[Unit]
+Description=Medi Runner Robot Controller API
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/medi-runner/robot-server
+Environment=PATH=/home/pi/medi-runner/env/bin:/usr/bin
+ExecStart=/home/pi/medi-runner/env/bin/python api_server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### systemd Service — ZeroClaw Agent
+
+Create `/etc/systemd/system/medi-runner-zeroclaw.service`:
+```ini
+[Unit]
+Description=Medi Runner ZeroClaw Agent
+After=medi-runner-api.service
+Requires=medi-runner-api.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/medi-runner/robot-server
+Environment=PATH=/home/pi/medi-runner/env/bin:/usr/bin
+ExecStart=/home/pi/medi-runner/env/bin/python zeroclaw_agent.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Enable and Start Services
 
 ```bash
-# Build frontend for production
-cd controller-front-end
-npm run build
+sudo systemctl daemon-reload
+sudo systemctl enable medi-runner-api medi-runner-zeroclaw
+sudo systemctl start medi-runner-api
 
-# Prepare robot server for deployment
-cd robot-server
-pip3 freeze > requirements.txt
+# Start ZeroClaw only when you want autonomous mode
+sudo systemctl start medi-runner-zeroclaw
 
-# Backend production setup
-cd controller-backend
-npm run build
-```
+# Check status
+sudo systemctl status medi-runner-api
+sudo systemctl status medi-runner-zeroclaw
 
-### Docker Deployment
-
-```dockerfile
-# Dockerfile.backend
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 3001
-CMD ["npm", "start"]
-```
-
-```dockerfile
-# Dockerfile.frontend
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=builder /app/out /usr/share/nginx/html
-EXPOSE 80
+# View logs
+journalctl -u medi-runner-api -f
+journalctl -u medi-runner-zeroclaw -f
 ```
 
 ### Environment Variables
 
 ```bash
-# controller-backend/.env
-NODE_ENV=production
-PORT=3001
-DB_URL=postgresql://user:pass@localhost:5432/medi_runner
-ROBOT_WS_URL=ws://raspberrypi.local:8765
-JWT_SECRET=your-secret-key
-
-# controller-front-end/.env.local
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_WS_URL=ws://localhost:3001
-
-# robot-server/config.py
-WS_HOST = '0.0.0.0'
-WS_PORT = 8765
+# robot-server/config.py — all configuration in one Python file
+SIMULATION_MODE = False
 CAMERA_RESOLUTION = (640, 480)
 CAMERA_FPS = 30
 DEBUG = False
 ```
 
-This development guide provides the foundation for building and maintaining the Medi Runner robot system. Follow the conventions and patterns established here to ensure consistency and maintainability across the project.
+---
+
+This development guide covers the Python-only bare-metal setup for the Medi Runner robot. All services run directly on the Raspberry Pi without Docker or containers.

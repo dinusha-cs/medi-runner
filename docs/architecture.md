@@ -2,12 +2,12 @@
 
 ## Overview
 
-The Medi Runner system follows a distributed architecture with four main components:
+The Medi Runner system is a **Python-only** bare-metal architecture running on a Raspberry Pi 4. There are two main components:
 
-1. **Robot Controller API** (Raspberry Pi, FastAPI :8000) — REST API exposing movement, sensor, buzzer, mode, and camera endpoints. All GPIO pins are pre-wired as per the hardware appendix.
-2. **ZeroClaw Agent** (Raspberry Pi, Python) — Autonomous-only line-following agent that reads the TCRT5000 5-channel IR array and Pi Camera V1.3 via the Robot Controller API, computes PID-based steering corrections, and posts movement commands back through the same API to follow the black line on the floor.
-3. **Controller Backend** (Node.js :3001) — Manages WebSocket communication, missions, and data processing; bridges the frontend to the Robot Controller API.
-4. **Controller Frontend** (Next.js :3000) — Manual control UI, real-time dashboard, live video streaming, mode switching. Connects **directly** to the Robot Controller API for movement commands and status, and to the Controller Backend for mission management and WebSocket events.
+1. **Robot Controller API** (FastAPI :8000) — REST API exposing movement, sensor, buzzer, mode, and camera endpoints. All GPIO pins are pre-wired as per the hardware appendix.
+2. **ZeroClaw Agent** (Python, async httpx) — Autonomous-only line-following agent that reads the TCRT5000 5-channel IR array and Pi Camera V1.3 via the Robot Controller API, computes PID-based steering corrections, and posts movement commands back through the same API.
+
+Both processes run directly on the Raspberry Pi — no Docker, no containers, no Node.js.
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -32,57 +32,41 @@ The Medi Runner system follows a distributed architecture with four main compone
 │  │              │  Buzzer   → GPIO 24          │               │   │
 │  │              │  Camera   → CSI ribbon       │               │   │
 │  │              └──────────────────────────────┘               │   │
-│  └──────────────▲──────────────────────▲───────────────────────┘   │
-│                 │ HTTP (localhost)      │ HTTP (localhost)          │
-│  ┌──────────────┴───────┐              │                           │
-│  │   ZeroClaw Agent     │              │                           │
-│  │   (Python, async)    │              │                           │
-│  │                      │              │                           │
-│  │  AUTONOMOUS MODE ONLY│              │                           │
-│  │  • GET /sensors/ir   │              │                           │
-│  │    → read IR S1-S5   │              │                           │
-│  │  • Camera (future)   │              │                           │
-│  │  • PID correction    │              │                           │
-│  │  • POST /forward     │              │                           │
-│  │  • POST /left|right  │              │                           │
-│  │  • POST /stop        │              │                           │
-│  └──────────────────────┘              │                           │
-└────────────────────────────────────────┼───────────────────────────┘
-                                         │
-                          HTTP / REST     │
-                 ┌───────────────────────┘
-                 │
-┌────────────────┴───────────────┐     ┌──────────────────────────┐
-│  Controller Frontend           │ WS  │  Controller Backend      │
-│  (Next.js :3000)               ├────►│  (Node.js :3001)         │
-│                                │     │                          │
-│  • Login (face recognition)    │     │  • WebSocket hub         │
-│  • Mode switch (manual/auto)   │     │  • Mission management    │
-│  • Manual virtual controller   │     │  • Real-time broadcast   │
-│  • Real-time video stream      │     │  • Auth / validation     │
-│  • Dashboard (IR, mode, speed) │     │  • Stream proxy          │
-│  • 360° panoramic viewer       │     └──────────────────────────┘
-│  • Mission prompt interface    │
-│  • Mini-map path trace         │
-│                                │─── HTTP ──► Robot Controller API
-└────────────────────────────────┘          (direct REST calls)
+│  └──────────────▲──────────────────────────────────────────────┘   │
+│                 │ HTTP (localhost)                                  │
+│  ┌──────────────┴───────┐                                          │
+│  │   ZeroClaw Agent     │                                          │
+│  │   (Python, async)    │                                          │
+│  │                      │                                          │
+│  │  AUTONOMOUS MODE ONLY│                                          │
+│  │  • GET /sensors/ir   │                                          │
+│  │    → read IR S1-S5   │                                          │
+│  │  • Camera (future)   │                                          │
+│  │  • PID correction    │                                          │
+│  │  • POST /forward     │                                          │
+│  │  • POST /left|right  │                                          │
+│  │  • POST /stop        │                                          │
+│  └──────────────────────┘                                          │
+│                                                                    │
+│  HTTP :8000 exposed to LAN (Wi-Fi)                                 │
+│  Any HTTP client (browser, curl, Postman, custom frontend)         │
+│  can consume the REST API from the network.                        │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Connection Summary
 
 | From | To | Protocol | Purpose |
 |------|----|----------|---------|
-| **Controller Frontend** | Robot Controller API | HTTP REST | Movement commands (manual), status polling, mode switch, video stream |
-| **Controller Frontend** | Controller Backend | WebSocket | Real-time events, mission updates, dashboard data |
-| **Controller Backend** | Robot Controller API | HTTP REST / WS | Command relay, status aggregation |
 | **ZeroClaw Agent** | Robot Controller API | HTTP REST | IR sensor reads, movement commands (**autonomous only**) |
+| **Any HTTP Client** | Robot Controller API | HTTP REST | Movement commands, status polling, mode switch, camera stream |
 
 ### Operating Modes
 
-| Mode | Who controls motors | Frontend | ZeroClaw Agent |
-|------|---------------------|----------|----------------|
-| **Manual** | Human via Frontend | Active — sends `POST /forward`, `/left`, `/right`, `/backward`, `/stop` | Paused — skips control loop (checks `GET /mode` and sleeps) |
-| **Autonomous** | ZeroClaw Agent | Read-only dashboard + mode switch button | Active — reads `GET /sensors/ir` → PID → `POST /forward\|left\|right` at 20 Hz |
+| Mode | Who controls motors | ZeroClaw Agent |
+|------|---------------------|----------------|
+| **Manual** | External HTTP client sends `POST /forward`, `/left`, `/right`, `/backward`, `/stop` | Paused — skips control loop (checks `GET /mode` and sleeps) |
+| **Autonomous** | ZeroClaw Agent | Active — reads `GET /sensors/ir` → PID → `POST /forward\|left\|right` at 20 Hz |
 
 ### ZeroClaw Agent — Autonomous Line-Following Flow
 
@@ -119,7 +103,7 @@ The Medi Runner system follows a distributed architecture with four main compone
 
 ### Robot Controller API (FastAPI — Raspberry Pi :8000)
 
-The central REST API that exposes all hardware capabilities. Every component (Frontend, Backend, ZeroClaw) communicates with the robot exclusively through this API.
+The central REST API that exposes all hardware capabilities. Every component communicates with the robot exclusively through this API.
 
 ```
 robot-server/
@@ -127,7 +111,7 @@ robot-server/
 │                              #   - MoveRequest / BuzzerRequest / ModeRequest models
 │                              #   - GPIO-driven IR reader (TCRT5000 5-ch)
 │                              #   - Buzzer helper (GPIO 24)
-│                              #   - CORS enabled for frontend access
+│                              #   - CORS enabled for cross-origin access
 ├── zeroclaw_agent.py          # ZeroClaw autonomous line-following agent
 ├── config.py                  # All GPIO pin maps, motor/sensor/CV settings
 │                              #   - Motor: ENA=20 IN1=23 IN2=22 IN3=27 IN4=17 ENB=16
@@ -138,14 +122,13 @@ robot-server/
 │   ├── motor_controller.py    # L298N motor driver (GPIO PWM via ENA/ENB)
 │   ├── sensor_controller.py   # Sensor abstraction (IR, future ultrasonic)
 │   └── navigation_controller.py
-├── controllers/               # Legacy / extended controllers
+├── controllers/               # Extended controllers
 ├── services/
-│   ├── websocket_server.py    # WS bridge (backend ↔ robot)
 │   ├── computer_vision.py     # Camera / sign detection / zone colour
 │   └── mission_executor.py
 ├── tests/
-│   ├── test_api.py            # 44 tests – API + motor controller
-│   └── test_zeroclaw.py       # 25 tests – ZeroClaw agent + endpoints
+│   ├── test_api.py            # API + motor controller tests
+│   └── test_zeroclaw.py       # ZeroClaw agent + endpoint tests
 └── utils/
     └── logger.py
 ```
@@ -193,86 +176,7 @@ zeroclaw_agent.py
 | 0 | 0 | 0 | 0 | 0 | Intersection | Pause, then continue |
 | 1 | 1 | 1 | 1 | 1 | Line lost | Creep forward / timeout-stop |
 
-### Controller Backend (Node.js :3001)
-
-```javascript
-controller-backend/
-├── src/
-│   ├── app.js                 # Express app configuration
-│   ├── routes/
-│   │   ├── robot.js          # Robot control endpoints (proxies to FastAPI)
-│   │   ├── missions.js       # Mission management
-│   │   └── streaming.js      # Video streaming routes
-│   ├── services/
-│   │   ├── robotCommService.js # HTTP client → Robot Controller API
-│   │   ├── missionService.js  # Mission planning & execution
-│   │   └── streamService.js   # Video stream proxy / relay
-│   ├── models/
-│   │   ├── Mission.js        # Mission data model
-│   │   └── Robot.js          # Robot state model
-│   └── middleware/
-│       ├── auth.js           # JWT authentication
-│       └── validation.js     # Request validation
-├── config/
-│   └── database.js           # Database configuration
-└── package.json
-```
-
-**Key Responsibilities:**
-- Proxies commands from frontend to Robot Controller API when needed
-- WebSocket hub broadcasting real-time status to all connected frontends
-- Mission planning, queueing, and execution orchestration
-- User authentication (JWT) and authorization
-- Video stream relay from Pi camera to browser clients
-
-### Controller Frontend (Next.js :3000)
-
-The frontend connects to **both** the Robot Controller API (direct REST for low-latency manual control) and the Controller Backend (WebSocket for real-time events and mission management).
-
-```javascript
-controller-frontend/
-├── pages/
-│   ├── index.js              # Dashboard homepage
-│   ├── control.js            # Manual robot control
-│   ├── missions.js           # Mission management
-│   └── settings.js           # System configuration
-├── src/
-│   └── components/
-│       ├── RobotControl/
-│       │   ├── ManualControl.jsx  # Virtual joystick / directional pad
-│       │   ├── StatusDisplay.jsx  # IR sensor readout, mode, speed
-│       │   ├── CameraFeed.jsx     # Live MJPEG / WebRTC video stream
-│       │   └── ModeSwitch.jsx     # Manual ↔ Autonomous toggle
-│       ├── Mission/
-│       │   ├── MissionPlanner.jsx # NL prompt → mission creation
-│       │   ├── MissionStatus.jsx  # Active mission monitoring
-│       │   └── MiniMap.jsx        # 2D graph-based path trace
-│       ├── Dashboard/
-│       │   ├── ZoneIndicator.jsx  # Current colour zone (Blue/Red/Green/Yellow)
-│       │   ├── SensorPanel.jsx    # Real-time IR S1-S5 visualisation
-│       │   └── PowerInfo.jsx      # Voltage, battery level
-│       └── Common/
-│           ├── Navigation.jsx     # App navigation
-│           └── Layout.jsx         # Page layout wrapper
-├── services/
-│   ├── robotApi.js           # HTTP client → Robot Controller API (direct)
-│   └── websocket.js          # WS client → Controller Backend
-├── styles/
-├── next.config.js
-└── package.json
-```
-
-**Key Responsibilities:**
-- Face-recognition login / enrollment with voice assistance
-- Real-time robot control interface (virtual controller → direct API calls)
-- Mode switching between manual and autonomous
-- Live video streaming from Pi Camera
-- 360° panoramic capture and viewer
-- Dashboard with live IR sensor data, zone status, speed, power
-- Natural-language mission prompt interface
-- Mini-map path trace visualisation
-
-## Communication Protocols
+## Communication Protocol
 
 ### REST API (Robot Controller — FastAPI :8000)
 
@@ -297,93 +201,29 @@ Mode Control
 Peripherals
   POST /api/robot/buzzer     { times: 1-10, duration: 0.05-2 } → Beep buzzer
 
+Camera
+  GET  /api/robot/camera/stream                                → MJPEG video stream
+  GET  /api/robot/camera/snapshot                              → Single JPEG frame
+
 Diagnostics
   GET  /health                                                 → API health check
-```
-
-### WebSocket Messages (Controller Backend ↔ Frontend)
-
-```json
-{
-  "type": "command",
-  "action": "move",
-  "data": {
-    "direction": "forward",
-    "speed": 50,
-    "duration": 1000
-  },
-  "timestamp": 1640995200000
-}
-
-{
-  "type": "status",
-  "data": {
-    "position": {"x": 10, "y": 5},
-    "battery": 85,
-    "sensors": [1, 0, 0, 1, 1],
-    "mode": "autonomous",
-    "zone": "blue"
-  },
-  "timestamp": 1640995201000
-}
-
-{
-  "type": "mission",
-  "action": "start",
-  "data": {
-    "id": "mission_001",
-    "waypoints": [{"x": 100, "y": 200}],
-    "tasks": ["deliver_medicine"]
-  },
-  "timestamp": 1640995202000
-}
-```
-
-### Controller Backend REST Endpoints
-
-```
-Robot (proxied)
-  GET    /api/robot/status        # Proxied to FastAPI /api/robot/status
-  POST   /api/robot/command       # Parse & forward to FastAPI movement endpoints
-
-Missions
-  GET    /api/missions            # List all missions
-  POST   /api/missions            # Create new mission (NL prompt parsed)
-  GET    /api/missions/:id        # Get mission details
-  PUT    /api/missions/:id        # Update mission
-  DELETE /api/missions/:id        # Cancel mission
-
-Streaming
-  GET    /api/stream              # Video stream proxy from Pi camera
-
-Auth
-  POST   /api/auth/login          # Face-recognition authentication
-  POST   /api/auth/enroll         # Enroll new face
 ```
 
 ## Data Flow
 
 ### Manual Mode
-1. User opens Frontend → authenticates via face recognition
-2. Frontend calls `POST /api/robot/mode {"mode": "manual"}` on Robot Controller API
-3. User presses virtual controller → Frontend calls `POST /api/robot/forward` (direct REST)
-4. Robot Controller API drives L298N motors via GPIO PWM
-5. Frontend polls `GET /api/robot/status` and `GET /api/robot/sensors/ir` for dashboard
-6. Live video streamed from Pi Camera → Frontend `<img>` / WebRTC
+1. External HTTP client calls `POST /api/robot/mode {"mode": "manual"}`
+2. Client sends movement commands: `POST /api/robot/forward`, etc.
+3. Robot Controller API drives L298N motors via GPIO PWM
+4. Client polls `GET /api/robot/status` and `GET /api/robot/sensors/ir` for telemetry
+5. Live video available at `GET /api/robot/camera/stream` (MJPEG)
 
 ### Autonomous Mode
-1. User (or ZeroClaw) calls `POST /api/robot/mode {"mode": "autonomous"}`
+1. ZeroClaw Agent (or external client) calls `POST /api/robot/mode {"mode": "autonomous"}`
 2. ZeroClaw Agent enters 20 Hz control loop
 3. Each tick: `GET /sensors/ir` → PID → `POST /forward|left|right`
-4. Frontend shows read-only dashboard; refreshes status via polling / WebSocket
-5. Mode can be switched back to manual from Frontend at any time
-
-### Mission Flow
-1. User enters NL prompt on Frontend (e.g. "deliver X-ray from MRI to ICU")
-2. Frontend sends prompt to Controller Backend via WebSocket
-3. Backend parses prompt → creates ordered waypoint list
-4. Backend orchestrates ZeroClaw + signboard detection to navigate
-5. Progress broadcast to Frontend via WebSocket → Mini-map updates
+4. External clients can monitor via polling `GET /status`, `GET /sensors/ir`
+5. Mode can be switched back to manual at any time via `POST /mode`
 
 ## Hardware Pin Map (pre-wired)
 
@@ -409,26 +249,17 @@ All pins follow BCM numbering. Wiring matches `docs/medi-runner-guide.md` Append
 
 ## Security Considerations
 
-- JWT-based authentication for API access
-- WebSocket connection authorization
-- Input validation and sanitization
-- Rate limiting for robot commands
-- Secure video streaming protocols
-
-## Scalability Features
-
-- Multi-robot support architecture
-- Horizontal scaling for backend services
-- Real-time data synchronization
-- Mission queue management
-- Load balancing for video streams
+- Input validation and sanitization on all API endpoints
+- Rate limiting for robot commands to prevent hardware abuse
+- CORS configured — restrict origins in production
+- HTTPS recommended when exposing API outside local network
 
 ## Development Guidelines
 
-- Use TypeScript for type safety
+- All backend code is **Python only** (FastAPI, asyncio, httpx)
+- Install bare metal on Raspberry Pi — no Docker, no containers
 - Implement comprehensive error handling
 - Follow RESTful API design principles
-- Use WebSocket for real-time communication
-- Implement proper logging and monitoring
-- Write unit and integration tests
-- Use Docker for consistent deployments
+- Use proper logging and monitoring (`utils/logger.py`)
+- Write unit and integration tests (`pytest`)
+- Use `systemd` services for production process management

@@ -38,8 +38,6 @@
 - [Error Handling](#error-handling)
 - [Hardware Pin Reference](#hardware-pin-reference)
 - [ZeroClaw Agent API Usage](#zeroclaw-agent-api-usage)
-- [Frontend Integration Guide](#frontend-integration-guide)
-
 ---
 
 ## Overview
@@ -48,17 +46,16 @@ The Robot Controller API is the **single point of access** to all robot hardware
 
 | Consumer | Mode | Typical Calls |
 |----------|------|---------------|
-| **Controller Frontend** (Next.js) | Manual | `POST /forward`, `POST /stop`, `GET /status`, `GET /sensors/ir`, `POST /mode` |
 | **ZeroClaw Agent** (Python) | Autonomous | `GET /sensors/ir`, `POST /forward\|left\|right`, `GET /mode`, `POST /mode` |
-| **Controller Backend** (Node.js) | Both | `GET /status`, `GET /mode` (status aggregation) |
+| **Any HTTP Client** (curl, Postman, custom frontend) | Manual | `POST /forward`, `POST /stop`, `GET /status`, `GET /sensors/ir`, `POST /mode` |
 
-CORS is enabled for all origins to allow direct browser-to-API calls from the frontend.
+CORS is enabled for all origins to allow browser-based API calls.
 
 ---
 
 ## Authentication
 
-Currently **open** (no auth token required). All endpoints accept unauthenticated requests. Authentication is handled at the Controller Backend / Frontend layer.
+Currently **open** (no auth token required). All endpoints accept unauthenticated requests. Authentication can be added at a reverse-proxy or application layer if needed.
 
 ---
 
@@ -571,22 +568,11 @@ Content-Length: <bytes>
 <JPEG binary data>
 ```
 
-**Frontend Usage (recommended):**
+**Usage:**
 
 ```html
 <!-- Just point an <img> at the endpoint — the browser handles the rest -->
 <img src="http://<pi-ip>:8000/api/robot/camera/stream" alt="Live Feed" />
-```
-
-```tsx
-// React / Next.js component
-const ROBOT_API = process.env.NEXT_PUBLIC_ROBOT_API || 'http://localhost:8000';
-
-<img
-  src={`${ROBOT_API}/api/robot/camera/stream`}
-  alt="Robot Camera Feed"
-  style={{ width: '100%', objectFit: 'contain' }}
-/>
 ```
 
 **Why MJPEG and not WebSocket / WebRTC?**
@@ -594,7 +580,7 @@ const ROBOT_API = process.env.NEXT_PUBLIC_ROBOT_API || 'http://localhost:8000';
 | Approach | Latency | Complexity | This Project |
 |----------|---------|------------|--------------|
 | **MJPEG `<img>`** | ~100ms | Trivial | **Best fit** — local WiFi, 640×480, all browsers |
-| WS base64 frames | ~150ms | Medium | Needed only if relaying through Node.js backend |
+| WS base64 frames | ~150ms | Medium | Adds unnecessary complexity |
 | WebRTC | ~50ms | High (STUN/TURN) | Overkill for local network |
 
 **Example:**
@@ -787,10 +773,10 @@ Camera settings (from `config.py`):
   GET /api/robot/camera/stream
         │  multipart/x-mixed-replace (MJPEG)
         ▼
-  Browser <img src="…/stream" />    ◄── Controller Frontend (Next.js)
+  Browser <img src="…/stream" />
         │
-        └── No WebSocket or Backend relay needed
-            Direct HTTP from browser to Pi
+        └── Direct HTTP from any client to Pi
+            No relay or proxy needed
 ```
 
 ---
@@ -880,89 +866,6 @@ python zeroclaw_agent.py --url http://192.168.1.100:8000 --speed 55
 
 # With PID tuning
 python zeroclaw_agent.py --kp 1.2 --ki 0.01 --kd 0.3
-```
-
----
-
-## Frontend Integration Guide
-
-### Direct API Calls (Manual Mode)
-
-The Controller Frontend connects **directly** to the Robot Controller API for low-latency manual control.
-
-```javascript
-// services/robotApi.js
-
-const ROBOT_API = process.env.NEXT_PUBLIC_ROBOT_API || 'http://localhost:8000';
-
-// Movement commands
-export async function moveForward(speed = 50) {
-  const res = await fetch(`${ROBOT_API}/api/robot/forward`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ speed }),
-  });
-  return res.json();
-}
-
-export async function stopRobot() {
-  const res = await fetch(`${ROBOT_API}/api/robot/stop`, { method: 'POST' });
-  return res.json();
-}
-
-// Mode switching
-export async function setMode(mode) {
-  const res = await fetch(`${ROBOT_API}/api/robot/mode`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode }),
-  });
-  return res.json();
-}
-
-export async function getMode() {
-  const res = await fetch(`${ROBOT_API}/api/robot/mode`);
-  return res.json();
-}
-
-// Sensor polling (for dashboard)
-export async function getIRSensors() {
-  const res = await fetch(`${ROBOT_API}/api/robot/sensors/ir`);
-  return res.json();
-}
-
-export async function getStatus() {
-  const res = await fetch(`${ROBOT_API}/api/robot/status`);
-  return res.json();
-}
-
-// Buzzer
-export async function buzzer(times = 1, duration = 0.3) {
-  const res = await fetch(`${ROBOT_API}/api/robot/buzzer`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ times, duration }),
-  });
-  return res.json();
-}
-```
-
-### Polling Pattern (Dashboard)
-
-```javascript
-// Poll IR sensors and status every 200ms for dashboard
-useEffect(() => {
-  const interval = setInterval(async () => {
-    const [irData, statusData] = await Promise.all([
-      getIRSensors(),
-      getStatus(),
-    ]);
-    setSensors(irData.data.sensors);
-    setRobotStatus(statusData.data);
-  }, 200);
-
-  return () => clearInterval(interval);
-}, []);
 ```
 
 ---

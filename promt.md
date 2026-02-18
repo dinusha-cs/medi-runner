@@ -28,7 +28,7 @@ application overview
 architecture:
              ┌──────────────────────────────┐
              │     User's Browser (UI)      │
-             │  Next.js Control Console     │
+             │   Control Console (HTTP)     │
              │                              │
              │  - React components          │
              │  - Calls REST APIs           │
@@ -99,11 +99,11 @@ Backend Components:
    - Load and save configuration settings (e.g., speed, sensor thresholds, PID parameters)
 
 Technology Stack:
-- Frontend: Next.js, React, WebSocket
+- Frontend: Any HTTP client (developed by separate team)
 - Backend: Python (FastAPI or Flask), WebSocket
 - Hardware Control: RPi.GPIO or gpiozero for GPIO interactions
 - Video Streaming: OpenCV or PiCamera for video capture and streaming
-- Deployment: Docker for containerization, systemd for service management
+- Deployment: Bare metal with systemd for service management
 
 
 
